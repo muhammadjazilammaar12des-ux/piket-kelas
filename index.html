@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Laporan Piket</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --ios-bg: #F2F2F7;
+            --ios-card: #FFFFFF;
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-text: #000000;
+            --ios-text-secondary: #8E8E93;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--ios-bg);
+            color: var(--ios-text);
+            -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            height: 100%;
+            width: 100%;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* Smooth page transitions */
+        .page-enter {
+            animation: slideIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* iOS-style inputs and cards */
+        .ios-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #FFFFFF;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.2s;
+            appearance: none;
+        }
+        .ios-input:focus {
+            outline: none;
+            border-color: var(--ios-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+        }
+
+        .ios-btn {
+            background-color: var(--ios-blue);
+            color: white;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 16px;
+            width: 100%;
+            text-align: center;
+            transition: transform 0.1s, opacity 0.1s;
+            border: none;
+            cursor: pointer;
+        }
+        .ios-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        .ios-btn.secondary {
+            background-color: #E5E5EA;
+            color: var(--ios-blue);
+        }
+        .ios-btn.danger {
+            background-color: var(--ios-red);
+            color: white;
+        }
+
+        .ios-card {
+            background: var(--ios-card);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        /* Glassmorphism Header */
+        .glass-header {
+            background: rgba(242, 242, 247, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        /* Custom Checkbox */
+        .ios-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #E5E5EA;
+        }
+        .ios-checkbox-wrapper:last-child {
+            border-bottom: none;
+        }
+        .ios-checkbox {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #C7C7CC;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .ios-checkbox:checked {
+            background-color: var(--ios-red); /* Red because it means 'Absent' */
+            border-color: var(--ios-red);
+        }
+        .ios-checkbox:checked::after {
+            content: '\2714';
+            position: absolute;
+            color: white;
+            font-size: 14px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Camera View */
+        #camera-container {
+            position: relative;
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 3/4;
+            max-height: 50vh;
+        }
+        #camera-stream {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- Dynamic Content Injected Here -->
+    </div>
+    <div id="toast" class="toast">Message</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Env variables handling
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'piket-app-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            // Fallback config
+        };
+
+        let app, db, auth;
+        let appState = {
+            view: 'loading',
+            config: null,
+            stream: null,
+            photoAnggota: null,
+            photoKondisi: null,
+            activePhotoTarget: 'anggota', // 'anggota' | 'kondisi'
+            absentStudents: []
+        };
+
+        // UI Helpers
+        const $ = id => document.getElementById(id);
+        const appContainer = $('app');
+        
+        function showToast(msg) {
+            const toast = $('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function render() {
+            appContainer.innerHTML = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'page-enter min-h-screen pb-10';
+
+            switch (appState.view) {
+                case 'loading':
+                    wrapper.innerHTML = renderLoading();
+                    break;
+                case 'setup':
+                    wrapper.innerHTML = renderSetup();
+                    break;
+                case 'home':
+                    wrapper.innerHTML = renderHome();
+                    break;
+                case 'student':
+                    wrapper.innerHTML = renderStudentRoom();
+                    if(appState.view === 'student') setTimeout(initCamera, 300);
+                    break;
+                case 'teacherAuth':
+                    wrapper.innerHTML = renderTeacherAuth();
+                    break;
+                case 'teacher':
+                    wrapper.innerHTML = renderTeacherRoom();
+                    if(appState.view === 'teacher') loadReports();
+                    break;
+            }
+            appContainer.appendChild(wrapper);
+            attachEvents();
+        }
+
+        function setView(view) {
+            if (appState.view === 'student' && view !== 'student') {
+                stopCamera();
+            }
+            appState.view = view;
+            render();
+        }
+
+        function renderHeader(title, showBack = false, backView = 'home') {
+            return `
+                <div class="glass-header px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        ${showBack ? `<button data-action="back" data-target="${backView}" class="text-[var(--ios-blue)] text-xl"><i class="fa-solid fa-chevron-left"></i></button>` : ''}
+                        <h1 class="text-xl font-bold tracking-tight">${title}</h1>
+                    </div>
+                    <div id="realtime-clock" class="text-sm font-medium text-[var(--ios-text-secondary)]"></div>
+                </div>
+            `;
+        }
+
+        function renderLoading() {
+            return `
+                <div class="flex flex-col items-center justify-center h-screen">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-[var(--ios-blue)] mb-4"></i>
+                    <p class="text-gray-500 font-medium">Memuat Sistem...</p>
+                </div>
+            `;
+        }
+
+        function renderSetup() {
+            return `
+                ${renderHeader('Pengaturan Awal')}
+                <div class="px-6 py-6 max-w-md mx-auto">
+                    <p class="text-sm text-gray-500 mb-6 text-center">Silakan lakukan pengaturan pertama kali untuk kelas ini.</p>
+                    
+                    <div class="ios-card">
+                        <label class="block text-sm font-semibold mb-2">Nama Guru Wali Kelas</label>
+                        <input type="text" id="setup-teacher" class="ios-input mb-4" placeholder="Contoh: Bpk. Budi Santoso">
+                        
+                        <label class="block text-sm font-semibold mb-2">PIN Ruang Guru (Min. 4 Angka)</label>
+                        <input type="password" id="setup-pin" class="ios-input mb-4" placeholder="••••" inputmode="numeric" pattern="[0-9]*">
+                        
+                        <label class="block text-sm font-semibold mb-2">Jurusan Kelas</label>
+                        <div class="relative mb-6">
+                            <select id="setup-major" class="ios-input appearance-none bg-white">
+                                <option value="MP">Manajemen Perkantoran (MP)</option>
+                                <option value="DKV">Desain Komunikasi Visual (DKV)</option>
+                                <option value="AKL">Akuntansi Keuangan Lembaga (AKL)</option>
+                                <option value="BD">Bisnis Digital (BD)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ios-card">
+                        <h2 class="text-lg font-bold mb-4">Jadwal Anggota Piket</h2>
+                        <p class="text-xs text-gray-500 mb-4">Pisahkan nama dengan koma (Contoh: Alif, Riski, Budi)</p>
+                        
+                        ${['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'].map(day => `
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold mb-1">${day}</label>
+                                <input type="text" id="setup-day-${day}" class="ios-input" placeholder="Nama siswa...">
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <button data-action="save-setup" class="ios-btn mt-4 shadow-lg shadow-blue-500/30">Simpan Pengaturan</button>
+                </div>
+            `;
+        }
+
+        function renderHome() {
+            return `
+                ${renderHeader('SMK Kartika X 2 Jakarta')}
+                <div class="px-6 py-8 max-w-md mx-auto flex flex-col items-center justify-center min-h-[70vh]">
+                    <div class="w-24 h-24 bg-blue-100 rounded-[24px] flex items-center justify-center mb-6 shadow-sm">
+                        <i class="fa-solid fa-school text-4xl text-[var(--ios-blue)]"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2 text-center">Sistem Piket Kelas</h2>
+                    <p class="text-gray-500 text-center mb-10 text-sm">Jurusan ${appState.config?.major || 'N/A'} • Wali: ${appState.config?.teacherName || 'N/A'}</p>
+
+                    <button data-action="go-student" class="ios-btn mb-4 flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20">
+                        <i class="fa-solid fa-user-graduate text-xl"></i> Masuk Ruang Murid
+                    </button>
+                    
+                    <button data-action="go-teacher-auth" class="ios-btn secondary flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-chalkboard-user text-xl"></i> Masuk Ruang Guru
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderStudentRoom() {
+            const daysIndo = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const todayName = daysIndo[new Date().getDay()];
+            let todayPicket = [];
+            
+            if (appState.config && appState.config.schedule && appState.config.schedule[todayName]) {
+                todayPicket = appState.config.schedule[todayName];
+            }
+
+            const isWeekend = todayName === 'Minggu' || todayName === 'Sabtu';
+
+            return `
+                ${renderHeader('Ruang Murid', true, 'home')}
+                <div class="px-4 py-4 max-w-md mx-auto">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold">Laporan Hari Ini</h2>
+                        <p class="text-[var(--ios-blue)] font-medium">Jadwal Hari: <b>${todayName}</b></p>
+                    </div>
+
+                    ${isWeekend ? `
+                        <div class="ios-card text-center py-10">
+                            <i class="fa-regular fa-face-smile text-5xl text-yellow-400 mb-4"></i>
+                            <h3 class="text-lg font-bold">Hari Libur</h3>
+                            <p class="text-gray-500 text-sm">Tidak ada jadwal piket untuk hari Sabtu dan Minggu.</p>
+                        </div>
+                    ` : `
+                        <!-- Photo Selector Tabs -->
+                        <div class="flex gap-2 mb-3">
+                            <button data-action="select-target" data-target="anggota" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-semibold transition-all border ${appState.activePhotoTarget === 'anggota' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-gray-700 border-gray-200'}">
+                                1. Foto Anggota ${appState.photoAnggota ? '<i class="fa-solid fa-circle-check text-green-300 ml-1"></i>' : ''}
+                            </button>
+                            <button data-action="select-target" data-target="kondisi" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-semibold transition-all border ${appState.activePhotoTarget === 'kondisi' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-gray-700 border-gray-200'}">
+                                2. Foto Kelas ${appState.photoKondisi ? '<i class="fa-solid fa-circle-check text-green-300 ml-1"></i>' : ''}
+                            </button>
+                        </div>
+
+                        <!-- Camera Section -->
+                        <div class="ios-card p-2 mb-4">
+                            <div id="camera-container" class="shadow-inner">
+                                <video id="camera-stream" autoplay playsinline></video>
+                                <div id="camera-loader" class="absolute inset-0 flex items-center justify-center bg-black/50 text-white z-20">
+                                    <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                                </div>
+                            </div>
+                            
+                            <button data-action="snap-photo" id="btn-snap" class="ios-btn py-3 mt-2 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-camera"></i> Ambil Foto ${appState.activePhotoTarget === 'anggota' ? 'Anggota Piket' : 'Kondisi Kelas'}
+                            </button>
+
+                            <!-- Preview Thumbnails Grid -->
+                            <div class="grid grid-cols-2 gap-2 mt-3">
+                                <div class="relative bg-gray-100 rounded-xl overflow-hidden border border-gray-200 text-center p-1 min-h-[90px] flex flex-col justify-center items-center">
+                                    <span class="text-[10px] font-bold text-gray-500 mb-1">FOTO ANGGOTA</span>
+                                    ${appState.photoAnggota ? `
+                                        <img src="${appState.photoAnggota}" class="w-full h-20 object-cover rounded-lg">
+                                        <button data-action="delete-photo" data-photo="anggota" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow"><i class="fa-solid fa-xmark"></i></button>
+                                    ` : `
+                                        <span class="text-xs text-gray-400 italic">Belum diambil</span>
+                                    `}
+                                </div>
+                                <div class="relative bg-gray-100 rounded-xl overflow-hidden border border-gray-200 text-center p-1 min-h-[90px] flex flex-col justify-center items-center">
+                                    <span class="text-[10px] font-bold text-gray-500 mb-1">FOTO KELAS</span>
+                                    ${appState.photoKondisi ? `
+                                        <img src="${appState.photoKondisi}" class="w-full h-20 object-cover rounded-lg">
+                                        <button data-action="delete-photo" data-photo="kondisi" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow"><i class="fa-solid fa-xmark"></i></button>
+                                    ` : `
+                                        <span class="text-xs text-gray-400 italic">Belum diambil</span>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Checkbox Section -->
+                        <div class="ios-card mb-6">
+                            <h3 class="text-lg font-bold mb-1">Daftar Anggota Piket</h3>
+                            <p class="text-xs text-gray-500 mb-4">Centang anggota yang <b class="text-red-500">TIDAK HADIR / TIDAK PIKET</b></p>
+                            
+                            ${todayPicket.length > 0 ? `
+                                <div class="flex flex-col">
+                                    ${todayPicket.map(name => `
+                                        <label class="ios-checkbox-wrapper">
+                                            <span class="font-medium text-gray-800">${name}</span>
+                                            <input type="checkbox" class="ios-checkbox student-checkbox" value="${name}">
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <p class="text-sm text-gray-500 italic text-center py-4">Belum ada anggota yang ditambahkan untuk hari ini.</p>
+                            `}
+                        </div>
+
+                        <button data-action="submit-report" id="btn-submit" class="ios-btn shadow-lg shadow-blue-500/30 opacity-50 cursor-not-allowed mb-6" disabled>
+                            Kirim Laporan
+                        </button>
+                    `}
+                </div>
+            `;
+        }
+
+        async function initCamera() {
+            const video = $('camera-stream');
+            const loader = $('camera-loader');
+            if(!video) return;
+
+            checkSubmitState();
+
+            try {
+                if (!appState.stream || !appState.stream.active) {
+                    const constraints = {
+                        video: {
+                            width: { ideal: 1920 },
+                            height: { ideal: 1080 },
+                            facingMode: 'environment'
+                        },
+                        audio: false
+                    };
+                    appState.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                }
+                
+                video.srcObject = appState.stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    if(loader) loader.style.display = 'none';
+                };
+            } catch (err) {
+                console.error("Camera access error:", err);
+                if(loader) {
+                    loader.innerHTML = `<div class="text-center px-4"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2 text-red-400"></i><p class="text-sm">Kamera tidak dapat diakses. Berikan izin akses kamera.</p></div>`;
+                }
+            }
+        }
+
+        function stopCamera() {
+            if (appState.stream) {
+                appState.stream.getTracks().forEach(track => track.stop());
+                appState.stream = null;
+            }
+        }
+
+        function takeSnapshot() {
+            const video = $('camera-stream');
+            if (!video || !video.videoWidth) return;
+
+            const canvas = document.createElement('canvas');
+            const ratio = video.videoWidth / video.videoHeight;
+            
+            // Batasi lebar gambar maksimal 800px agar sangat ringan disimpan di Firestore
+            let targetWidth = 800;
+            let targetHeight = targetWidth / ratio;
+
+            if (video.videoWidth < targetWidth) {
+                targetWidth = video.videoWidth;
+                targetHeight = video.videoHeight;
+            }
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+            
+            // Kompresi JPEG kualitas 0.5 (ukuran ~50-80KB saja)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+
+            if (appState.activePhotoTarget === 'anggota') {
+                appState.photoAnggota = compressedBase64;
+                appState.activePhotoTarget = 'kondisi'; // Otomatis berpindah ke target foto ke-2 jika foto 2 belum ada
+            } else {
+                appState.photoKondisi = compressedBase64;
+            }
+
+            render();
+        }
+
+        function checkSubmitState() {
+            const btn = $('btn-submit');
+            if(!btn) return;
+            // Wajib dua foto terisi baru tombol bisa ditekan
+            if (appState.photoAnggota && appState.photoKondisi) {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.removeAttribute('disabled');
+            } else {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.setAttribute('disabled', 'true');
+            }
+        }
+
+        function renderTeacherAuth() {
+            return `
+                ${renderHeader('Autentikasi Guru', true, 'home')}
+                <div class="px-6 py-10 max-w-sm mx-auto mt-10">
+                    <div class="ios-card text-center mb-6">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-lock text-2xl text-[var(--ios-blue)]"></i>
+                        </div>
+                        <h2 class="text-xl font-bold mb-2">Masukkan PIN</h2>
+                        <p class="text-sm text-gray-500 mb-6">Silakan masukkan PIN untuk mengakses ruang guru.</p>
+                        
+                        <input type="password" id="auth-pin" class="ios-input text-center text-2xl tracking-widest mb-4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" maxlength="10">
+                        <button data-action="login-teacher" class="ios-btn">Masuk</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTeacherRoom() {
+            return `
+                ${renderHeader('Ruang Guru')}
+                <div class="px-4 py-4 max-w-md mx-auto">
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold">Halo,</h2>
+                            <p class="text-[var(--ios-blue)] font-bold text-xl">${appState.config?.teacherName || 'Guru'}</p>
+                        </div>
+                        <button data-action="logout-teacher" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-full text-sm font-semibold hover:bg-gray-300 transition-colors">
+                            Keluar <i class="fa-solid fa-right-from-bracket ml-1"></i>
+                        </button>
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-3">Laporan Minggu Ini</h3>
+                    <div id="reports-container" class="space-y-4 pb-10">
+                        <div class="text-center py-10">
+                            <i class="fa-solid fa-spinner fa-spin text-3xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500">Memuat laporan...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderReportItem(report) {
+            const date = new Date(report.timestamp);
+            const timeString = report.timeString || date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const dateString = report.dateString || date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            
+            const noAbsents = !report.absentStudents || report.absentStudents.length === 0;
+
+            return `
+                <div class="ios-card !p-0 overflow-hidden mb-4">
+                    <div class="p-3.5 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                        <div>
+                            <span class="font-bold text-base text-gray-800">Hari ${report.day || 'Laporan'}</span>
+                            <p class="text-xs text-gray-500">${dateString} • ${timeString}</p>
+                        </div>
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Tersimpan</span>
+                    </div>
+                    
+                    <!-- 2 Foto Display -->
+                    <div class="grid grid-cols-2 gap-2 p-3 bg-gray-100">
+                        <div class="relative rounded-xl overflow-hidden bg-black aspect-square">
+                            <img src="${report.photoAnggota}" class="w-full h-full object-cover" alt="Foto Anggota">
+                            <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] font-bold p-1 text-center backdrop-blur-xs">
+                                <i class="fa-solid fa-users mr-1"></i> Anggota Piket
+                            </div>
+                        </div>
+                        <div class="relative rounded-xl overflow-hidden bg-black aspect-square">
+                            <img src="${report.photoKondisi}" class="w-full h-full object-cover" alt="Foto Kondisi Kelas">
+                            <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] font-bold p-1 text-center backdrop-blur-xs">
+                                <i class="fa-solid fa-chalkboard mr-1"></i> Kondisi Kelas
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4">
+                        <h4 class="font-bold text-xs text-gray-500 mb-2 uppercase tracking-wider">Status Absensi</h4>
+                        ${noAbsents ? `
+                            <div class="flex items-center gap-2 text-[var(--ios-green)] text-sm font-medium bg-green-50 p-2.5 rounded-xl">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Semua anggota piket hadir.
+                            </div>
+                        ` : `
+                            <div class="bg-red-50 p-3 rounded-xl border border-red-100">
+                                <p class="text-[var(--ios-red)] font-semibold text-xs mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-xmark"></i> Tidak Hadir (${report.absentStudents.length})
+                                </p>
+                                <ul class="list-disc list-inside text-xs text-red-900 font-medium">
+                                    ${report.absentStudents.map(name => `<li>${name}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachEvents() {
+            updateClock();
+
+            appContainer.onclick = async (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                
+                const action = btn.dataset.action;
+                
+                if (action === 'back') {
+                    setView(btn.dataset.target);
+                }
+                else if (action === 'save-setup') {
+                    await handleSetupSubmit();
+                }
+                else if (action === 'go-student') {
+                    setView('student');
+                }
+                else if (action === 'go-teacher-auth') {
+                    setView('teacherAuth');
+                }
+                else if (action === 'select-target') {
+                    appState.activePhotoTarget = btn.dataset.target;
+                    render();
+                }
+                else if (action === 'snap-photo') {
+                    takeSnapshot();
+                }
+                else if (action === 'delete-photo') {
+                    const photoType = btn.dataset.photo;
+                    if (photoType === 'anggota') appState.photoAnggota = null;
+                    if (photoType === 'kondisi') appState.photoKondisi = null;
+                    appState.activePhotoTarget = photoType;
+                    render();
+                }
+                else if (action === 'submit-report') {
+                    await submitReport(btn);
+                }
+                else if (action === 'login-teacher') {
+                    const pin = $('auth-pin').value;
+                    if (pin === appState.config.pin) {
+                        setView('teacher');
+                    } else {
+                        showToast('PIN Salah!');
+                        $('auth-pin').value = '';$('auth-pin').focus();
+                    }
+                }
+                else if (action === 'logout-teacher') {
+                    setView('home');
+                }
+            };
+        }
+
+        async function handleSetupSubmit() {
+            const teacher = $('setup-teacher').value.trim();
+            const pin = $('setup-pin').value.trim();
+            const major = $('setup-major').value;
+            
+            if (!teacher || pin.length < 4) {
+                showToast('Isi nama guru dan PIN min. 4 angka!');
+                return;
+            }
+
+            const schedule = {};
+            ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'].forEach(day => {
+                const val = $(`setup-day-${day}`).value.trim();
+                schedule[day] = val ? val.split(',').map(n => n.trim()).filter(n => n) : [];
+            });
+
+            const configData = {
+                setupDone: true,
+                teacherName: teacher,
+                pin: pin,
+                major: major,
+                schedule: schedule,
+                updatedAt: new Date().toISOString()
+            };
+
+            try {
+                showToast('Menyimpan pengaturan...');
+                const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'main');
+                await setDoc(configRef, configData);
+                appState.config = configData;
+                showToast('Pengaturan Berhasil!');
+                setView('home');
+            } catch (error) {
+                console.error("Error saving config: ", error);
+                showToast('Gagal menyimpan. Coba lagi.');
+            }
+        }
+
+        async function submitReport(btnElement) {
+            const daysIndo = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const todayName = daysIndo[new Date().getDay()];
+
+            if (todayName === 'Minggu' || todayName === 'Sabtu') {
+                showToast('Hari libur tidak dapat mengirim laporan!');
+                return;
+            }
+
+            if (!appState.photoAnggota || !appState.photoKondisi) {
+                showToast('Harap lengkapi kedua foto terlebih dahulu!');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            const absents = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+
+            btnElement.classList.add('opacity-50');
+            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+            btnElement.disabled = true;
+
+            const now = new Date();
+            const reportData = {
+                day: todayName,
+                timestamp: Date.now(),
+                dateString: now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+                timeString: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                absentStudents: absents,
+                photoAnggota: appState.photoAnggota,
+                photoKondisi: appState.photoKondisi
+            };
+
+            try {
+                // MENGGUNAKAN setDoc DENGAN ID NAMA HARI (Menimpa/Overwrite data hari yang sama pada minggu lalu)
+                const reportRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', todayName);
+                await setDoc(reportRef, reportData);
+
+                // Reset foto di state lokal
+                appState.photoAnggota = null;
+                appState.photoKondisi = null;
+
+                showToast(`Laporan hari ${todayName} berhasil disimpan!`);
+                setView('home');
+            } catch (error) {
+                console.error("Error submitting report:", error);
+                showToast('Gagal mengirim laporan.');
+                btnElement.classList.remove('opacity-50');
+                btnElement.innerHTML = 'Kirim Laporan';
+                btnElement.disabled = false;
+            }
+        }
+
+        async function loadReports() {
+            const container = $('reports-container');
+            if(!container) return;
+
+            try {
+                const reportsRef = collection(db, 'artifacts', appId, 'public', 'data', 'reports');
+                
+                // Firestore hanya menyimpan maksimal 5 dokumen (Senin-Jumat)
+                const querySnapshot = await getDocs(reportsRef);
+                let reports = [];
+                querySnapshot.forEach((doc) => {
+                    reports.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Urutkan laporan dari yang paling baru diunggah
+                reports.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                if (reports.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-10">
+                            <i class="fa-regular fa-folder-open text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">Belum ada laporan minggu ini.</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = reports.map(renderReportItem).join('');
+                }
+            } catch (error) {
+                console.error("Error loading reports:", error);
+                container.innerHTML = `<p class="text-center text-red-500 py-10">Gagal memuat laporan.</p>`;
+            }
+        }
+
+        async function initApp() {
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                }
+
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'main');
+                const configSnap = await getDoc(configRef);
+
+                if (configSnap.exists() && configSnap.data().setupDone) {
+                    appState.config = configSnap.data();
+                    setView('home');
+                } else {
+                    setView('setup');
+                }
+
+            } catch (error) {
+                console.error("Initialization error:", error);
+                showToast("Gagal terhubung ke database.");
+            }
+        }
+
+        function updateClock() {
+            const clockEl = $('realtime-clock');
+            if (clockEl) {
+                const now = new Date();
+                const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const day = days[now.getDay()];
+                const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second:'2-digit' }).replace(/\./g, ':');
+                
+                clockEl.innerHTML = `<b>${day}</b>, ${date} <br/> <span class="text-[var(--ios-blue)] font-bold">${time}</span>`;
+            }
+        }
+        
+        setInterval(updateClock, 1000);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            render();
+            initApp();
+        });
+
+    </script>
+</body>
+</html>
