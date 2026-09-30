@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aplikasi Sistem Laporan Piket Pro berbasis web">
+    
+    <meta property="og:title" content="Sistem Laporan Piket Pro">
+    <meta property="og:description" content="Aplikasi pelaporan kondisi kelas harian">
+    <meta property="og:type" content="website">
+
+    <title>Sistem Laporan Piket Pro</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --ios-bg: #F2F2F7;
+            --ios-card: #FFFFFF;
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-text: #000000;
+            --ios-text-secondary: #8E8E93;
+            --ios-border: rgba(0,0,0,0.1);
+            --danger-bg: rgba(255, 59, 48, 0.1);
+            --blue-bg-light: rgba(0,122,255,0.1);
+        }
+        
+        @media (prefers-color-scheme: dark) { :root { --is-dark: 1; } }
+        body.dark-mode {
+            --ios-bg: #000000;
+            --ios-card: #1C1C1E;
+            --ios-blue: #0A84FF;
+            --ios-green: #30D158;
+            --ios-red: #FF453A;
+            --ios-text: #FFFFFF;
+            --ios-border: rgba(255,255,255,0.15);
+            --danger-bg: rgba(255, 69, 58, 0.15);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--ios-bg); 
+            color: var(--ios-text); 
+            margin: 0; 
+            min-height: 100vh; 
+            overflow: hidden; 
+            transition: background-color 0.3s; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mb-6 { margin-bottom: 24px; }
+        .mb-10 { margin-bottom: 40px; }
+        .mt-2 { margin-top: 8px; }
+        .mt-4 { margin-top: 16px; }
+        .py-4 { padding-top: 16px; padding-bottom: 16px; }
+        .py-10 { padding-top: 40px; padding-bottom: 40px; }
+        .px-2 { padding-left: 8px; padding-right: 8px; }
+        .p-3 { padding: 12px; }
+        
+        .flex-1 { flex: 1; }
+        .w-auto { width: auto; }
+        .shadow-primary { box-shadow: 0 8px 16px rgba(0,122,255,0.3); }
+        .shadow-success { box-shadow: 0 8px 16px rgba(52, 199, 89, 0.3); }
+        .icon-lg { font-size: 40px; color: var(--ios-blue); }
+        .icon-empty { font-size: 48px; }
+        .text-blue { color: var(--ios-blue); }
+        .text-red { color: var(--ios-red); }
+        .border-red { border-color: var(--ios-red); }
+        .bg-none { background: none; }
+        .border-none { border: none; }
+        .cursor-pointer { cursor: pointer; }
+        .circle-indicator { color: var(--ios-green); font-size: 10px; }
+        
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+        .global-header { 
+            width: 100%; 
+            max-width: 480px;
+            background: rgba(var(--ios-bg), 0.8); 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px); 
+            border-bottom: 1px solid var(--ios-border); 
+            position: sticky; 
+            top: 0; 
+            z-index: 50; 
+            padding: 16px; 
+            box-sizing: border-box;
+        }
+
+        #app { 
+            height: calc(100vh - 65px); 
+            width: 100%; 
+            max-width: 480px; 
+            overflow-y: auto; 
+            scroll-behavior: smooth; 
+            position: relative; 
+            background-color: var(--ios-bg);
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        
+        .panel { min-height: 100%; padding-bottom: 80px; animation: slideIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+        .panel[hidden] { display: none !important; }
+        .min-h-70 { min-height: 70vh; }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .container { margin: 0 auto; padding: 16px; width: 100%; box-sizing: border-box; }
+        .flex { display: flex; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .justify-center { justify-content: center; } .flex-col { flex-direction: column; }
+        .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; }
+        .w-full { width: 100%; } .text-center { text-align: center; }
+        
+        .text-2xl { font-size: 1.5rem; font-weight: 700; }
+        .text-xl { font-size: 1.25rem; font-weight: 700; }
+        .text-lg { font-size: 1.125rem; font-weight: 700; }
+        .text-sm { font-size: 0.875rem; } .text-xs { font-size: 0.75rem; }
+        .text-secondary { color: var(--ios-text-secondary); }
+        .font-bold { font-weight: 700; }
+        
+        .card { background: var(--ios-card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--ios-border); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        fieldset.card { padding: 12px; margin: 0 0 16px 0; min-width: 0; box-sizing: border-box; }
+        legend { padding: 0 8px; }
+
+        .icon-box { width: 96px; height: 96px; background: var(--blue-bg-light); border-radius: 24px; display: flex; align-items: center; justify-content: center; }
+        
+        .input { width: 100%; padding: 14px 16px; border: 1px solid var(--ios-border); border-radius: 12px; font-size: 16px; box-sizing: border-box; background: transparent; color: inherit; font-family: inherit; margin-bottom: 12px; transition: border 0.3s;}
+        .input:focus { outline: none; border-color: var(--ios-blue); }
+        .input-pin { font-size: 24px; letter-spacing: 8px; }
+        
+        .btn { background-color: var(--ios-blue); color: white; padding: 16px; border-radius: 14px; font-weight: 600; width: 100%; border: none; cursor: pointer; transition: transform 0.1s, opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px;}
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background-color: rgba(120,120,128,0.12); color: var(--ios-blue); }
+        .btn-success { background-color: var(--ios-green); }
+        .btn-danger { background-color: var(--ios-red); }
+        .btn-small { padding: 10px; border-radius: 10px; font-size: 14px; }
+        .btn-outline { background: transparent; border: 1px solid var(--ios-border); color: var(--ios-text); }
+
+        .camera-wrapper { position: relative; width: 100%; border-radius: 20px; overflow: hidden; background: #000; aspect-ratio: 9/16; transition: aspect-ratio 0.3s; display: flex; align-items: center; justify-content: center; }
+        .camera-wrapper.landscape { aspect-ratio: 16/9; }
+        #camera-stream { width: 100%; height: 100%; object-fit: cover; }
+        .cam-switch { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); color: white; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); z-index: 5; }
+        
+        .checkbox-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--ios-border); }
+        .checkbox-row:last-child { border-bottom: none; }
+        .ios-checkbox { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ios-text-secondary); appearance: none; cursor: pointer; position: relative; }
+        .ios-checkbox:checked { background-color: var(--ios-red); border-color: var(--ios-red); }
+        .ios-checkbox:checked::after { content: '\2714'; position: absolute; color: white; font-size: 14px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        
+        .report-img { width: 100%; border-radius: 12px; border: 1px solid var(--ios-border); background-color: var(--ios-border); object-fit: cover; aspect-ratio: 16/9; }
+        
+        .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(0,0,0,0.85); color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; opacity: 0; transition: transform 0.3s, opacity 0.3s; z-index: 1000; pointer-events: none; white-space: nowrap;}
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        
+        dialog { border: none; border-radius: 20px; background: var(--ios-card); color: var(--ios-text); padding: 24px; max-width: 320px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.2); margin: auto; }
+        dialog::backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        
+        .preview-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; display: none; border: 2px solid white; }
+        .max-h-250 { max-height: 250px; overflow-y: auto; }
+        .danger-box { background: var(--danger-bg); padding: 12px; border-radius: 12px; }
+    </style>
+</head>
+<body>
+
+    <header class="global-header">
+        <nav class="flex items-center justify-between" aria-label="Navigasi Utama">
+            <div class="flex items-center gap-3">
+                <button id="btn-back" class="btn-outline btn-small border-none text-blue bg-none" hidden aria-label="Kembali ke halaman sebelumnya">
+                    <i class="fa-solid fa-chevron-left text-xl" aria-hidden="true"></i>
+                </button>
+                <h1 id="header-title" class="text-xl">Memuat...</h1>
+            </div>
+            <div class="flex items-center gap-4 text-secondary text-sm">
+                <button id="btn-theme" title="Ubah Tema" aria-label="Ubah tema gelap atau terang" class="border-none bg-none cursor-pointer text-secondary">
+                    <i class="fa-solid fa-moon text-lg" aria-hidden="true"></i>
+                </button>
+                <span id="realtime-clock" class="font-bold">--:--</span>
+            </div>
+        </nav>
+    </header>
+
+    <main id="app">
+        <section id="panel-loading" class="panel min-h-70" aria-live="polite">
+            <h2 class="sr-only">Memuat Aplikasi</h2>
+            <div class="container flex flex-col items-center justify-center min-h-70">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-blue mb-4" aria-hidden="true"></i>
+                <p class="text-secondary font-bold">Menghubungkan ke Server...</p>
+            </div>
+        </section>
+
+        <section id="panel-home" class="panel min-h-70" hidden>
+            <div class="container flex flex-col items-center justify-center min-h-70">
+                <div class="icon-box mb-6">
+                    <i class="fa-solid fa-cloud icon-lg" aria-hidden="true"></i>
+                </div>
+                <h2 class="text-2xl text-center mb-2">Laporan Piket Pro</h2>
+                <p id="home-teacher-name" class="text-secondary text-center mb-10">Wali Kelas: -</p>
+
+                <button id="btn-nav-student" class="btn btn-primary mb-4">
+                    <i class="fa-solid fa-camera" aria-hidden="true"></i> Buat Laporan Piket
+                </button>
+                <button id="btn-nav-teacher" class="btn btn-secondary mb-4">
+                    <i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i> Masuk Ruang Guru
+                </button>
+                <button id="btn-nav-setup" class="btn btn-outline border-none text-blue">
+                    <i class="fa-solid fa-gear" aria-hidden="true"></i> Pengaturan Sistem
+                </button>
+            </div>
+        </section>
+
+        <section id="panel-setup" class="panel" hidden>
+            <div class="container">
+                <h2 class="sr-only">Pengaturan Sistem</h2>
+                
+                <form id="form-setup">
+                    <div class="card">
+                        <label for="setup-teacher" class="text-sm font-bold text-secondary">Nama Wali Kelas</label>
+                        <input type="text" id="setup-teacher" class="input mt-2" maxlength="50" placeholder="Contoh: Bpk. Budi" autocomplete="off">
+                        
+                        <label for="setup-pin" class="text-sm font-bold text-secondary">Ubah PIN Admin (Angka)</label>
+                        <input type="password" id="setup-pin" class="input mt-2" maxlength="6" placeholder="Default: 1234" autocomplete="off" inputmode="numeric">
+                    </div>
+                    
+                    <h2 class="text-xl mb-2">Daftar Piket Siswa</h2>
+                    <p class="text-xs text-secondary mb-4">Pisahkan nama dengan koma (,) atau enter.</p>
+                    
+                    <div id="setup-days-container"></div>
+                    
+                    <button type="submit" id="btn-save-setup" class="btn btn-primary mt-4 shadow-primary">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Simpan Pengaturan
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section id="panel-student" class="panel" hidden>
+            <div class="container">
+                <h2 id="student-day-title" class="text-2xl mb-2">Laporan Hari Ini</h2>
+                <p id="student-day-subtitle" class="text-sm text-secondary mb-4"></p>
+
+                <div class="flex gap-2 mb-4">
+                    <button id="btn-tab-anggota" class="btn btn-small btn-primary flex-1">
+                        1. Foto Anggota <img id="thumb-anggota" class="preview-thumb" alt="Pratinjau Foto Anggota">
+                    </button>
+                    <button id="btn-tab-kondisi" class="btn btn-small btn-secondary flex-1">
+                        2. Foto Kelas <img id="thumb-kondisi" class="preview-thumb" alt="Pratinjau Foto Kelas">
+                    </button>
+                </div>
+
+                <div class="card p-3">
+                    <p id="cam-info" class="text-xs text-center text-secondary font-bold mb-3">Mode: Potrait (9:16)</p>
+                    <div id="camera-container" class="camera-wrapper mb-4">
+                        <video id="camera-stream" autoplay playsinline muted>
+                            Kamera tidak didukung oleh browser Anda.
+                        </video>
+                        <button id="btn-cam-switch" class="cam-switch" aria-label="Ganti Kamera Depan atau Belakang">
+                            <i class="fa-solid fa-camera-rotate" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <button id="btn-snap" class="btn btn-primary">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ambil Foto
+                    </button>
+                </div>
+
+                <fieldset class="card border-red">
+                    <legend class="text-sm font-bold text-red">
+                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> TANDAI YANG TIDAK HADIR / BOLOS:
+                    </legend>
+                    <div id="student-checkboxes" class="max-h-250 px-2"></div>
+                </fieldset>
+
+                <button id="btn-submit-report" class="btn btn-success shadow-success" disabled>
+                    <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Kirim Laporan Sekarang
+                </button>
+            </div>
+        </section>
+
+        <section id="panel-teacher" class="panel" hidden>
+            <div class="container">
+                <h2 class="sr-only">Ruang Guru - Data Laporan</h2>
+                <p class="text-xs text-secondary text-center mb-4">
+                    <i class="fa-solid fa-circle circle-indicator" aria-hidden="true"></i> Real-time Tersinkronisasi
+                </p>
+                <div id="reports-container"></div>
+                <div id="reports-empty" class="text-center py-10" hidden>
+                    <i class="fa-solid fa-box-open text-secondary icon-empty mb-4" aria-hidden="true"></i>
+                    <p class="text-secondary font-bold">Belum Ada Laporan</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <dialog id="pin-modal" aria-labelledby="modal-title">
+        <div class="text-center">
+            <h2 id="modal-title" class="text-xl mb-2">Keamanan Akses</h2>
+            <p class="text-xs text-secondary mb-6">Masukkan PIN Admin</p>
+            <form id="form-pin" method="dialog">
+                <input type="password" id="pin-input" inputmode="numeric" autocomplete="current-password" class="input text-center font-bold input-pin mb-6" maxlength="6" placeholder="••••" required>
+                <div class="flex gap-2">
+                    <button type="button" id="btn-cancel-pin" class="btn btn-secondary btn-small">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-small">Masuk</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">Notifikasi</div>
+
+    <script nomodule>
+        alert("Browser Anda tidak mendukung Modul JavaScript (ES6). Aplikasi ini mungkin tidak berfungsi dengan baik. Harap perbarui browser Anda.");
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, 
+            serverTimestamp, onSnapshot, query, orderBy, limit, deleteDoc
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDecOhqp_jEDkZWVkxlhqtPlchq3k6rwXU",
+            authDomain: "piket-kelas-46e64.firebaseapp.com",
+            projectId: "piket-kelas-46e64",
+            storageBucket: "piket-kelas-46e64.firebasestorage.app",
+            messagingSenderId: "1014446912711",
+            appId: "1:1014446912711:web:841635655d4885e0067ae2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = initializeFirestore(app, { localCache: persistentLocalCache() });
+        const storage = getStorage(app);
+
+        const State = {
+            config: null,
+            currentPanel: 'loading',
+            targetAuthPanel: null,
+            reportsUnsubscribe: null,
+            camStream: null,
+            camFacingMode: 'environment',
+            photoTarget: 'anggota',
+            blobAnggota: null,
+            blobKondisi: null,
+            urlAnggota: null,
+            urlKondisi: null,
+            absents: new Set()
+        };
+
+        const UI = {
+            showToast: (msg, type = 'info') => {
+                const toast = document.getElementById('toast');
+                toast.textContent = msg;
+                toast.style.backgroundColor = type === 'error' ? 'var(--ios-red)' : 'rgba(0,0,0,0.85)';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            },
+            escapeHTML: (str) => {
+                if (str === null || str === undefined) return '';
+                return String(str).replace(/[&<>'"]/g, tag => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                }[tag] || tag));
+            }
+        };
+
+        const CameraMod = {
+            start: async () => {
+                const video = document.getElementById('camera-stream');
+                const container = document.getElementById('camera-container');
+                if(!video) return;
+
+                if(State.camStream) CameraMod.stop();
+                
+                try {
+                    State.camStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: State.camFacingMode, 
+                            width: { ideal: 1280, max: 1920 },
+                            height: { ideal: 720, max: 1080 }
+                        } 
+                    });
+                    
+                    const existingFallback = container.querySelector('.cam-error-fallback');
+                    if (existingFallback) existingFallback.remove();
+                    video.style.display = 'block';
+                    
+                    video.srcObject = State.camStream;
+                    video.style.transform = State.camFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+                } catch (err) {
+                    video.style.display = 'none';
+                    if(!container.querySelector('.cam-error-fallback')) {
+                        const fallbackDiv = document.createElement('div');
+                        fallbackDiv.className = 'cam-error-fallback flex flex-col items-center justify-center w-full p-3';
+                        fallbackDiv.style.zIndex = '10';
+                        fallbackDiv.innerHTML = `
+                            <i class="fa-solid fa-camera-slash text-2xl text-red mb-3" aria-hidden="true"></i>
+                            <p class="text-xs text-center text-white mb-3">Akses kamera ditolak.</p>
+                            <button id="btn-cam-retry" class="btn btn-small btn-primary w-auto">Coba Lagi</button>
+                        `;
+                        container.appendChild(fallbackDiv);
+                        document.getElementById('btn-cam-retry').addEventListener('click', CameraMod.start);
+                    }
+                    UI.showToast("Gagal mengaktifkan kamera.", "error");
+                }
+            },
+            stop: () => {
+                if (State.camStream) {
+                    State.camStream.getTracks().forEach(track => {
+                        track.stop();
+                        State.camStream.removeTrack(track);
+                    });
+                    State.camStream = null;
+                }
+                const video = document.getElementById('camera-stream');
+                if(video) {
+                    video.pause();
+                    video.srcObject = null;
+                    video.removeAttribute('src');
+                    video.load();
+                }
+            },
+            switchCamera: () => {
+                State.camFacingMode = State.camFacingMode === 'user' ? 'environment' : 'user';
+                CameraMod.stop();
+                CameraMod.start();
+            },
+            setTarget: (target) => {
+                State.photoTarget = target;
+                const isAnggota = target === 'anggota';
+                
+                document.getElementById('btn-tab-anggota').className = isAnggota ? 'btn btn-small btn-primary flex-1' : 'btn btn-small btn-secondary flex-1';
+                document.getElementById('btn-tab-kondisi').className = !isAnggota ? 'btn btn-small btn-primary flex-1' : 'btn btn-small btn-secondary flex-1';
+                
+                const camWrap = document.getElementById('camera-container');
+                if(isAnggota) camWrap.classList.remove('landscape');
+                else camWrap.classList.add('landscape');
+                
+                document.getElementById('cam-info').innerText = isAnggota ? 'Mode: Potrait (9:16)' : 'Mode: Landscape (16:9)';
+            },
+            takeSnapshot: () => {
+                const video = document.getElementById('camera-stream');
+                if (!video || !video.videoWidth || !video.videoHeight) return UI.showToast('Kamera belum siap!', 'error');
+
+                const isAnggota = State.photoTarget === 'anggota';
+                const canvas = document.createElement('canvas');
+                
+                const MAX_RES = 1080;
+                let width = video.videoWidth;
+                let height = video.videoHeight;
+                
+                if (width > MAX_RES || height > MAX_RES) {
+                    if (width > height) {
+                        height = Math.floor(height * (MAX_RES / width));
+                        width = MAX_RES;
+                    } else {
+                        width = Math.floor(width * (MAX_RES / height));
+                        height = MAX_RES;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                if (State.camFacingMode === 'user') {
+                    ctx.translate(canvas.width, 0); 
+                    ctx.scale(-1, 1);
+                }
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                canvas.toBlob((blob) => {
+                    if (!blob) return UI.showToast("Gagal mengambil gambar.", "error");
+
+                    const newImgUrl = URL.createObjectURL(blob);
+                    
+                    if (isAnggota) {
+                        if(State.urlAnggota) URL.revokeObjectURL(State.urlAnggota);
+                        State.blobAnggota = blob;
+                        State.urlAnggota = newImgUrl;
+                        
+                        const thumb = document.getElementById('thumb-anggota');
+                        thumb.src = newImgUrl;
+                        thumb.style.display = 'block';
+                        CameraMod.setTarget('kondisi'); 
+                    } else {
+                        if(State.urlKondisi) URL.revokeObjectURL(State.urlKondisi);
+                        State.blobKondisi = blob;
+                        State.urlKondisi = newImgUrl;
+                        
+                        const thumb = document.getElementById('thumb-kondisi');
+                        thumb.src = newImgUrl;
+                        thumb.style.display = 'block';
+                    }
+
+                    const btnSubmit = document.getElementById('btn-submit-report');
+                    if(btnSubmit && State.blobAnggota && State.blobKondisi) {
+                        btnSubmit.disabled = false;
+                    }
+                    UI.showToast(`Foto ${isAnggota ? 'Anggota' : 'Kelas'} berhasil diambil!`);
+                }, 'image/jpeg', 0.7);
+            }
+        };
+
+        const App = {
+            init: async () => {
+                if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+                
+                setInterval(() => {
+                    const now = new Date();
+                    document.getElementById('realtime-clock').innerHTML = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                }, 1000);
+
+                App.bindEvents();
+
+                try {
+                    const fetchPromise = getDoc(doc(db, "settings", "config"));
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000));
+                    
+                    const docSnap = await Promise.race([fetchPromise, timeoutPromise]);
+                    
+                    if (docSnap && docSnap.exists()) {
+                        State.config = docSnap.data();
+                        App.navigate('home');
+                    } else {
+                        App.navigate('setup');
+                    }
+                } catch (err) {
+                    UI.showToast("Menggunakan konfigurasi lokal / offline mode.", "info");
+                    App.navigate('home');
+                }
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) CameraMod.stop();
+                    else if (State.currentPanel === 'student') CameraMod.start();
+                });
+            },
+
+            bindEvents: () => {
+                document.getElementById('btn-back').addEventListener('click', () => App.navigate('home'));
+                document.getElementById('btn-theme').addEventListener('click', () => {
+                    document.body.classList.toggle('dark-mode');
+                    localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+                });
+
+                document.getElementById('btn-nav-student').addEventListener('click', () => App.navigate('student'));
+                document.getElementById('btn-nav-teacher').addEventListener('click', () => App.requestAuth('teacher'));
+                document.getElementById('btn-nav-setup').addEventListener('click', () => App.requestAuth('setup'));
+
+                document.getElementById('form-setup').addEventListener('submit', App.saveSetup);
+                
+                const pinModal = document.getElementById('pin-modal');
+                document.getElementById('form-pin').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    App.verifyPin();
+                });
+                document.getElementById('btn-cancel-pin').addEventListener('click', () => pinModal.close());
+
+                document.getElementById('btn-tab-anggota').addEventListener('click', () => CameraMod.setTarget('anggota'));
+                document.getElementById('btn-tab-kondisi').addEventListener('click', () => CameraMod.setTarget('kondisi'));
+                document.getElementById('btn-cam-switch').addEventListener('click', CameraMod.switchCamera);
+                document.getElementById('btn-snap').addEventListener('click', CameraMod.takeSnapshot);
+                document.getElementById('btn-submit-report').addEventListener('click', App.submitReport);
+            },
+            
+            navigate: (panelName, isPop = false) => {
+                if (State.currentPanel === 'student' && panelName !== 'student') CameraMod.stop();
+                if (State.reportsUnsubscribe && panelName !== 'teacher') {
+                    State.reportsUnsubscribe();
+                    State.reportsUnsubscribe = null;
+                }
+
+                document.querySelectorAll('.panel').forEach(p => p.hidden = true);
+                const targetPanel = document.getElementById(`panel-${panelName}`);
+                if (targetPanel) targetPanel.hidden = false;
+                
+                State.currentPanel = panelName;
+
+                if (!isPop && panelName !== 'loading') {
+                    history.pushState({ panel: panelName }, '', `#${panelName}`);
+                }
+
+                const titleEl = document.getElementById('header-title');
+                const backBtn = document.getElementById('btn-back');
+                
+                if(panelName === 'home') {
+                    titleEl.innerText = "Beranda";
+                    backBtn.hidden = true;
+                    document.getElementById('home-teacher-name').innerText = `Wali Kelas: ${State.config?.teacher ? UI.escapeHTML(State.config.teacher) : '-'}`;
+                } 
+                else {
+                    backBtn.hidden = false;
+                    if(panelName === 'setup') {
+                        titleEl.innerText = "Pengaturan";
+                        App.renderSetup();
+                    }
+                    else if(panelName === 'student') {
+                        titleEl.innerText = "Kirim Laporan";
+                        App.renderStudentRoom();
+                        CameraMod.start();
+                    }
+                    else if(panelName === 'teacher') {
+                        titleEl.innerText = "Ruang Guru (Live)";
+                        App.renderTeacherRoom();
+                    }
+                }
+            },
+
+            requestAuth: (targetPanel) => {
+                State.targetAuthPanel = targetPanel;
+                const modal = document.getElementById('pin-modal');
+                const input = document.getElementById('pin-input');
+                input.value = '';
+                modal.showModal();
+            },
+            
+            verifyPin: () => {
+                const pin = document.getElementById('pin-input').value;
+                const validPin = State.config?.adminPin || '1234';
+                
+                if (pin === validPin) { 
+                    document.getElementById('pin-modal').close();
+                    App.navigate(State.targetAuthPanel);
+                } else {
+                    UI.showToast("PIN Salah!", "error");
+                }
+            },
+
+            renderSetup: () => {
+                document.getElementById('setup-teacher').value = State.config?.teacher || '';
+                document.getElementById('setup-pin').value = State.config?.adminPin || '1234';
+                
+                const container = document.getElementById('setup-days-container');
+                const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const confStudents = State.config?.students || {};
+                
+                container.innerHTML = days.map(day => `
+                    <div class="card p-3 mb-3">
+                        <label for="setup-${day}" class="text-sm font-bold text-blue">Hari ${day}</label>
+                        <textarea id="setup-${day}" class="input text-sm mt-2 mb-0" rows="2" cols="30" placeholder="Contoh: Andi, Budi, Citra">${UI.escapeHTML((confStudents[day] || []).join(', '))}</textarea>
+                    </div>
+                `).join('');
+            },
+
+            saveSetup: async (e) => {
+                e.preventDefault();
+                const teacher = document.getElementById('setup-teacher').value.trim();
+                const adminPin = document.getElementById('setup-pin').value.trim() || '1234';
+                if(!teacher) return UI.showToast("Nama guru wajib diisi!", "error");
+                
+                const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const studentsData = {};
+                let total = 0;
+                
+                days.forEach(d => {
+                    const raw = document.getElementById(`setup-${d}`).value;
+                    const arr = [...new Set(raw.split(/[\n,]+/).map(s => s.trim()).filter(s => s.length > 0))];
+                    studentsData[d] = arr;
+                    total += arr.length;
+                });
+
+                if(total === 0) return UI.showToast("Isi minimal jadwal untuk 1 hari!", "error");
+
+                const newConfig = { teacher, adminPin, students: studentsData, updatedAt: serverTimestamp() };
+                const btn = document.getElementById('btn-save-setup');
+                
+                try {
+                    btn.disabled = true; 
+                    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> Menyimpan...';
+                    
+                    await setDoc(doc(db, "settings", "config"), newConfig);
+                    State.config = newConfig; 
+                    UI.showToast("Pengaturan tersimpan!");
+                    App.navigate('home');
+                } catch (err) {
+                    UI.showToast("Gagal menyimpan. Cek koneksi internet.", "error");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Simpan Pengaturan';
+                }
+            },
+
+            renderStudentRoom: () => {
+                const daysIndo = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const todayName = daysIndo[new Date().getDay()];
+                document.getElementById('student-day-subtitle').innerText = `Menampilkan jadwal piket hari ${todayName}`;
+                
+                const list = (State.config?.students || {})[todayName] || [];
+                const container = document.getElementById('student-checkboxes');
+                
+                if(list.length === 0) {
+                    container.innerHTML = `<p class="text-secondary text-sm text-center py-4">Tidak ada jadwal piket hari ini.</p>`;
+                    document.getElementById('btn-submit-report').disabled = true;
+                    return;
+                }
+                
+                document.getElementById('btn-submit-report').disabled = !(State.blobAnggota && State.blobKondisi);
+                container.innerHTML = list.map((name, i) => `
+                    <div class="checkbox-row">
+                        <label for="cb-${i}" class="text-sm font-bold flex-1">${UI.escapeHTML(name)}</label>
+                        <input type="checkbox" id="cb-${i}" value="${UI.escapeHTML(name)}" class="ios-checkbox cb-student" ${State.absents.has(name) ? 'checked' : ''}>
+                    </div>
+                `).join('');
+
+                document.querySelectorAll('.cb-student').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        if(e.target.checked) State.absents.add(e.target.value);
+                        else State.absents.delete(e.target.value);
+                    });
+                });
+            },
+
+            submitReport: async () => {
+                if(!State.blobAnggota || !State.blobKondisi) {
+                    return UI.showToast("Harap foto Anggota & Kelas terlebih dahulu!", "error");
+                }
+
+                const btn = document.getElementById('btn-submit-report');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> Mengirim Laporan...';
+
+                const docRef = doc(collection(db, "reports"));
+                const rId = docRef.id;
+
+                const withTimeout = (promise, ms, errorMessage) => {
+                    const timeout = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error(errorMessage)), ms)
+                    );
+                    return Promise.race([promise, timeout]);
+                };
+
+                try {
+                    const refA = ref(storage, `reports/${rId}_anggota.jpg`);
+                    const refK = ref(storage, `reports/${rId}_kondisi.jpg`);
+                    const metadata = { contentType: 'image/jpeg' };
+                    
+                    const [snapA, snapK] = await withTimeout(
+                        Promise.all([
+                            uploadBytes(refA, State.blobAnggota, metadata),
+                            uploadBytes(refK, State.blobKondisi, metadata)
+                        ]),
+                        5000,
+                        "Waktu upload habis (lebih dari 5 detik). Cek koneksi Anda."
+                    );
+                    
+                    const urlA = await getDownloadURL(snapA.ref);
+                    const urlK = await getDownloadURL(snapK.ref);
+
+                    const absentArr = Array.from(State.absents);
+                    
+                    await withTimeout(
+                        setDoc(docRef, {
+                            day: ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date().getDay()],
+                            timestamp: serverTimestamp(),
+                            localTimeFallback: Date.now(),
+                            absentsArray: absentArr, 
+                            absents: absentArr.length ? absentArr.join(', ') : 'Semua Hadir',
+                            photoAnggota: urlA,
+                            photoKondisi: urlK
+                        }),
+                        5000,
+                        "Gagal menyimpan ke basis data."
+                    );
+
+                    UI.showToast("Laporan Berhasil Terkirim!");
+                    
+                    if(State.urlAnggota) { URL.revokeObjectURL(State.urlAnggota); State.urlAnggota = null; }
+                    if(State.urlKondisi) { URL.revokeObjectURL(State.urlKondisi); State.urlKondisi = null; }
+                    
+                    State.blobAnggota = null; 
+                    State.blobKondisi = null; 
+                    State.absents.clear();
+                    
+                    const thumbA = document.getElementById('thumb-anggota');
+                    const thumbK = document.getElementById('thumb-kondisi');
+                    if(thumbA) { thumbA.style.display = 'none'; thumbA.removeAttribute('src'); }
+                    if(thumbK) { thumbK.style.display = 'none'; thumbK.removeAttribute('src'); }
+                    
+                    App.navigate('home');
+                } catch(err) {
+                    console.error("Upload Error:", err);
+                    UI.showToast(err.message || "Gagal mengirim laporan.", "error");
+                    
+                    try {
+                        await deleteObject(ref(storage, `reports/${rId}_anggota.jpg`)).catch(()=>{});
+                        await deleteObject(ref(storage, `reports/${rId}_kondisi.jpg`)).catch(()=>{});
+                    } catch(e){}
+
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Kirim Laporan Sekarang';
+                }
+            },
+
+            renderTeacherRoom: () => {
+                const container = document.getElementById('reports-container');
+                const emptyMsg = document.getElementById('reports-empty');
+                container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-2xl text-blue" aria-hidden="true"></i></div>';
+
+                const q = query(collection(db, "reports"), orderBy("timestamp", "desc"), limit(20));
+                
+                State.reportsUnsubscribe = onSnapshot(q, (snapshot) => {
+                    container.innerHTML = '';
+                    if(snapshot.empty) {
+                        emptyMsg.hidden = false;
+                        return;
+                    }
+                    emptyMsg.hidden = true;
+                    
+                    snapshot.forEach(docSnap => {
+                        const d = docSnap.data();
+                        const id = docSnap.id;
+                        
+                        const timeVal = d.timestamp ? d.timestamp.toDate() : new Date(d.localTimeFallback || Date.now());
+                        const secureDateString = timeVal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) + ' - ' + timeVal.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+                        
+                        const div = document.createElement('div');
+                        div.className = 'card';
+                        div.innerHTML = `
+                            <div class="flex justify-between items-center" style="border-bottom: 1px solid var(--ios-border); padding-bottom:12px; margin-bottom:12px;">
+                                <div>
+                                    <h3 class="font-bold text-lg">Hari ${UI.escapeHTML(d.day)}</h3>
+                                    <span class="text-xs text-secondary">${UI.escapeHTML(secureDateString)}</span>
+                                </div>
+                                <button class="btn-outline btn-small border-red text-red btn-delete" data-id="${id}" aria-label="Hapus Laporan Hari ${UI.escapeHTML(d.day)}" title="Hapus Laporan">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            
+                            <p class="text-xs font-bold text-secondary mb-2"><i class="fa-solid fa-users" aria-hidden="true"></i> FOTO ANGGOTA</p>
+                            <img src="${UI.escapeHTML(d.photoAnggota)}" alt="Foto Anggota Piket" class="report-img mb-4" loading="lazy" decoding="async">
+                            
+                            <p class="text-xs font-bold text-secondary mb-2 mt-4"><i class="fa-solid fa-broom" aria-hidden="true"></i> FOTO KELAS</p>
+                            <img src="${UI.escapeHTML(d.photoKondisi)}" alt="Foto Kondisi Kelas" class="report-img" loading="lazy" decoding="async">
+                            
+                            <div class="danger-box mt-4">
+                                <p class="text-xs font-bold text-red mb-2">TIDAK HADIR / BOLOS:</p>
+                                <p class="text-sm font-bold text-red">${UI.escapeHTML(d.absents)}</p>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+
+                    document.querySelectorAll('.btn-delete').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const reportId = e.currentTarget.getAttribute('data-id');
+                            App.deleteReport(reportId);
+                        });
+                    });
+
+                }, (error) => {
+                    container.innerHTML = '<p class="text-center text-secondary py-10">Gagal memuat data (Mode Offline aktif atau terputus).</p>';
+                });
+            },
+
+            deleteReport: async (id) => {
+                if(!confirm("Yakin ingin menghapus laporan ini beserta fotonya secara permanen?")) return;
+                
+                const deleteSafe = async (path) => {
+                    try { 
+                        await deleteObject(ref(storage, path)); 
+                    } catch (e) { 
+                        if (e.code !== 'storage/object-not-found') {
+                            console.warn(`Gagal menghapus file storage di ${path}:`, e);
+                        }
+                    }
+                };
+
+                try {
+                    await Promise.allSettled([
+                        deleteSafe(`reports/${id}_anggota.jpg`),
+                        deleteSafe(`reports/${id}_kondisi.jpg`)
+                    ]);
+                    
+                    await deleteDoc(doc(db, "reports", id));
+                    UI.showToast("Laporan Berhasil Dihapus!");
+                } catch(err) {
+                    console.error("Delete Error:", err);
+                    UI.showToast("Gagal menghapus dokumen laporan.", "error");
+                }
+            }
+        };
+
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.panel) {
+                App.navigate(event.state.panel, true); 
+            } else {
+                App.navigate('home', true);
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => { App.init(); });
+    </script>
+</body>
+</html>
