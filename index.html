@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Aplikasi Sistem Laporan Piket Pro berbasis web">
+    <meta name="theme-color" content="#F2F2F7">
+
+    <title>Sistem Laporan Piket Pro</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --ios-bg: #F2F2F7;
+            --ios-card: #FFFFFF;
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-text: #000000;
+            --ios-text-secondary: #8E8E93;
+            --ios-border: rgba(0,0,0,0.1);
+            --danger-bg: rgba(255, 59, 48, 0.1);
+            --blue-bg-light: rgba(0,122,255,0.1);
+        }
+
+        body.dark-mode {
+            --ios-bg: #000000;
+            --ios-card: #1C1C1E;
+            --ios-blue: #0A84FF;
+            --ios-green: #30D158;
+            --ios-red: #FF453A;
+            --ios-text: #FFFFFF;
+            --ios-border: rgba(255,255,255,0.15);
+            --danger-bg: rgba(255, 69, 58, 0.15);
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: var(--ios-bg); 
+            color: var(--ios-text); 
+            margin: 0; 
+            min-height: 100vh;
+            min-height: 100dvh; 
+            line-height: 1.5;
+            overflow: hidden; 
+            transition: background-color 0.3s; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .global-header { 
+            width: 100%; 
+            max-width: 480px;
+            background: color-mix(in srgb, var(--ios-bg) 85%, transparent);
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px); 
+            border-bottom: 1px solid var(--ios-border); 
+            position: sticky; 
+            top: 0; 
+            z-index: 50; 
+            padding: calc(14px + env(safe-area-inset-top)) 16px 14px 16px; 
+            box-sizing: border-box;
+        }
+
+        .mb-1 { margin-bottom: 4px; } .mb-2 { margin-bottom: 8px; } .mb-3 { margin-bottom: 12px; } .mb-4 { margin-bottom: 16px; } .mb-6 { margin-bottom: 24px; } .mb-10 { margin-bottom: 40px; }
+        .mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; }
+        .py-4 { padding-top: 16px; padding-bottom: 16px; } .py-10 { padding-top: 40px; padding-bottom: 40px; }
+        .px-2 { padding-left: 8px; padding-right: 8px; } .p-3 { padding: 12px; }
+
+        .flex-1 { flex: 1; } .w-auto { width: auto; }
+        .shadow-primary { box-shadow: 0 8px 16px rgba(0,122,255,0.3); } .shadow-success { box-shadow: 0 8px 16px rgba(52, 199, 89, 0.3); }
+        .icon-lg { font-size: 40px; color: var(--ios-blue); } .icon-empty { font-size: 48px; }
+        .text-blue { color: var(--ios-blue); } .text-red { color: var(--ios-red); }
+        .border-red { border-color: var(--ios-red); }
+        .bg-none { background: none; } .border-none { border: none; }
+        .cursor-pointer { cursor: pointer; } .circle-indicator { color: var(--ios-green); font-size: 10px; }
+
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+        #header-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px; margin: 0; line-height: 1.2; }
+
+        #app { 
+            height: calc(100vh - 60px); height: calc(100dvh - 60px);
+            width: 100%; max-width: 480px; overflow-y: auto; scroll-behavior: smooth; position: relative; 
+            background-color: var(--ios-bg); box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .panel { min-height: 100%; padding-bottom: 80px; animation: slideIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+        .panel[hidden] { display: none !important; }
+        .min-h-70 { min-height: 70vh; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .container { margin: 0 auto; padding: 16px; width: 100%; box-sizing: border-box; }
+        .flex { display: flex; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } 
+        .justify-center { justify-content: center; } .flex-col { flex-direction: column; }
+        .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; }
+        .w-full { width: 100%; } .text-center { text-align: center; }
+
+        .text-2xl { font-size: 1.5rem; font-weight: 700; line-height: 1.25; }
+        .text-xl { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+        .text-lg { font-size: 1.125rem; font-weight: 700; line-height: 1.35; }
+        .text-sm { font-size: 0.875rem; line-height: 1.4; } 
+        .text-xs { font-size: 0.75rem; line-height: 1.4; }
+        .text-secondary { color: var(--ios-text-secondary); }
+        .font-bold { font-weight: 700; }
+
+        .card { background: var(--ios-card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--ios-border); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        fieldset.card { padding: 16px 12px; margin: 0 0 16px 0; min-width: 0; box-sizing: border-box; }
+        legend { padding: 0 8px; margin-bottom: 4px; }
+        label { display: block; }
+
+        .icon-box { width: 96px; height: 96px; background: var(--blue-bg-light); border-radius: 24px; display: flex; align-items: center; justify-content: center; }
+
+        .input { width: 100%; padding: 14px 16px; border: 1px solid var(--ios-border); border-radius: 12px; font-size: 16px; box-sizing: border-box; background: transparent; color: inherit; font-family: inherit; margin-bottom: 12px; transition: border 0.3s;}
+        .input:focus { outline: none; border-color: var(--ios-blue); }
+        .input-pin { font-size: 24px; letter-spacing: 8px; }
+
+        .btn { padding: 16px; border-radius: 14px; font-weight: 600; width: 100%; border: none; cursor: pointer; transition: transform 0.1s, opacity 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; line-height: 1;}
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background-color: var(--ios-blue); color: white; }
+        .btn-secondary { background-color: rgba(120,120,128,0.12); color: var(--ios-blue); }
+        .btn-success { background-color: var(--ios-green); color: white; }
+        .btn-danger { background-color: var(--ios-red); color: white; }
+        .btn-small { padding: 10px 14px; border-radius: 10px; font-size: 14px; }
+        .btn-outline { background: transparent; border: 1px solid var(--ios-border); color: var(--ios-text); }
+
+        .camera-wrapper { position: relative; width: 100%; border-radius: 20px; overflow: hidden; background: #000; aspect-ratio: 9/16; transition: aspect-ratio 0.3s; display: flex; align-items: center; justify-content: center; }
+        .camera-wrapper.landscape { aspect-ratio: 16/9; }
+        #camera-stream { width: 100%; height: 100%; object-fit: cover; }
+        .cam-switch { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); color: white; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); z-index: 5; }
+
+        .checkbox-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 4px; border-bottom: 1px solid var(--ios-border); gap: 12px; }
+        .checkbox-row:last-child { border-bottom: none; }
+        .checkbox-row label { margin-bottom: 0; line-height: 1.3; word-break: break-word; }
+        .ios-checkbox { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ios-text-secondary); appearance: none; cursor: pointer; position: relative; flex-shrink: 0; }
+        .ios-checkbox:checked { background-color: var(--ios-red); border-color: var(--ios-red); }
+        .ios-checkbox:checked::after { content: '\2714'; position: absolute; color: white; font-size: 14px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+        .report-img-portrait { width: 100%; border-radius: 12px; border: 1px solid var(--ios-border); background-color: var(--ios-border); object-fit: cover; aspect-ratio: 9/16; display: block; }
+        .report-img-landscape { width: 100%; border-radius: 12px; border: 1px solid var(--ios-border); background-color: var(--ios-border); object-fit: cover; aspect-ratio: 16/9; display: block; }
+
+        .toast { position: fixed; inset: auto; bottom: 40px; left: 50%; margin: 0; border: none; transform: translateX(-50%) translateY(100px); background: rgba(0,0,0,0.85); color: white; padding: 12px 20px; border-radius: 18px; font-size: 14px; opacity: 0; transition: transform 0.3s, opacity 0.3s; z-index: 9999; pointer-events: none; white-space: normal; text-align: center; line-height: 1.4; width: max-content; max-width: min(92vw, 420px);}
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        dialog { border: none; border-radius: 20px; background: var(--ios-card); color: var(--ios-text); padding: 24px; max-width: 320px; width: 90%; box-shadow: 0 4px 24px rgba(0,0,0,0.2); margin: auto; }
+        dialog::backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+        .preview-thumb { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; display: none; border: 1.5px solid white; margin-left: 4px; }
+        .max-h-250 { max-height: 250px; overflow-y: auto; }
+        .danger-box { background: var(--danger-bg); padding: 12px 14px; border-radius: 12px; }
+
+        /* ===== AI PANEL ===== */
+        .ai-card { background: var(--blue-bg-light); border: 1px solid rgba(0,122,255,.18); border-radius: 16px; padding: 14px; margin-bottom: 16px; }
+        .ai-card-title { display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:10px; }
+        .ai-progress-track { width:100%; height:8px; background:rgba(127,127,127,.18); border-radius:999px; overflow:hidden; margin:8px 0 4px; }
+        .ai-progress-bar { height:100%; width:0%; background:var(--ios-blue); border-radius:999px; transition:width .25s ease; }
+        .ai-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .ai-stat { background:var(--ios-card); border:1px solid var(--ios-border); border-radius:12px; padding:10px; }
+        .ai-stat-label { font-size:11px; color:var(--ios-text-secondary); }
+        .ai-stat-value { font-size:14px; font-weight:700; margin-top:3px; }
+        .ai-pill { display:inline-flex; align-items:center; gap:4px; padding:5px 8px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(120,120,128,.12); margin:2px 3px 2px 0; }
+        .ai-flags { margin-top:8px; padding-left:16px; }
+        .ai-flags li { margin-bottom:4px; font-size:12px; }
+        .ai-note { font-size:11px; color:var(--ios-text-secondary); margin-top:8px; }
+        .ai-error { background:var(--danger-bg); color:var(--ios-red); border-radius:12px; padding:10px; font-size:12px; }
+    </style>
+</head>
+<body>
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.body.classList.add('dark-mode');
+                    const metaTheme = document.querySelector('meta[name="theme-color"]');
+                    if (metaTheme) metaTheme.setAttribute('content', '#000000');
+                }
+            } catch(e) { console.warn("Akses LocalStorage diblokir oleh browser."); }
+        })();
+    </script>
+
+    <header class="global-header">
+        <nav class="flex items-center justify-between" aria-label="Navigasi Utama">
+            <div class="flex items-center gap-3">
+                <button id="btn-back" class="btn-outline btn-small border-none text-blue bg-none" hidden aria-label="Kembali ke halaman sebelumnya">
+                    <i class="fa-solid fa-chevron-left text-xl" aria-hidden="true"></i>
+                </button>
+                <h1 id="header-title" class="text-xl">Memuat...</h1>
+            </div>
+            <div class="flex items-center gap-4 text-secondary text-sm">
+                <button id="btn-theme" title="Ubah Tema" aria-label="Ubah tema gelap atau terang" class="border-none bg-none cursor-pointer text-secondary">
+                    <i class="fa-solid fa-moon text-lg" aria-hidden="true"></i>
+                </button>
+                <span id="realtime-clock" class="font-bold">--:--</span>
+            </div>
+        </nav>
+    </header>
+
+    <main id="app">
+        <section id="panel-loading" class="panel min-h-70">
+            <div class="container flex flex-col items-center justify-center min-h-70">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-blue mb-4" aria-hidden="true"></i>
+                <p class="text-secondary font-bold">Menghubungkan ke Server...</p>
+            </div>
+        </section>
+
+        <section id="panel-home" class="panel min-h-70" hidden>
+            <div class="container flex flex-col items-center justify-center min-h-70">
+                <div class="icon-box mb-6">
+                    <i class="fa-solid fa-cloud icon-lg" aria-hidden="true"></i>
+                </div>
+                <h2 class="text-2xl text-center mb-2">Laporan Piket Pro</h2>
+                <p id="home-teacher-name" class="text-secondary text-center mb-10">Wali Kelas: -</p>
+
+                <button id="btn-nav-student" class="btn btn-primary mb-4">
+                    <i class="fa-solid fa-camera" aria-hidden="true"></i> Buat Laporan Piket
+                </button>
+                <button id="btn-nav-teacher" class="btn btn-secondary mb-4">
+                    <i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i> Masuk Ruang Guru
+                </button>
+                <button id="btn-nav-setup" class="btn btn-outline border-none text-blue">
+                    <i class="fa-solid fa-gear" aria-hidden="true"></i> Pengaturan Sistem
+                </button>
+            </div>
+        </section>
+
+        <section id="panel-setup" class="panel" hidden>
+            <div class="container">
+                <form id="form-setup">
+                    <div class="card mb-4">
+                        <label for="setup-teacher" class="text-sm font-bold text-secondary mb-1">Nama Wali Kelas</label>
+                        <input type="text" id="setup-teacher" class="input mt-2" maxlength="50" placeholder="Contoh: Bpk. Budi" autocomplete="off">
+
+                        <label for="setup-pin" class="text-sm font-bold text-secondary mb-1">Ubah PIN Admin (Angka)</label>
+                        <input type="password" id="setup-pin" class="input mt-2" maxlength="6" placeholder="Default: 1234" autocomplete="off" inputmode="numeric">
+                    </div>
+
+                    <h2 class="text-xl mb-1">Daftar Piket Siswa</h2>
+                    <p class="text-xs text-secondary mb-4">Pisahkan nama dengan koma (,) atau enter.</p>
+
+                    <div id="setup-days-container"></div>
+
+                    <button type="submit" id="btn-save-setup" class="btn btn-primary mt-4 shadow-primary">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Simpan Pengaturan
+                    </button>
+
+                    <button type="button" id="btn-reset-spam" class="btn btn-secondary mt-4 w-full">
+                        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Buka Blokir Limit Harian
+                    </button>
+                    <p id="limit-status" class="text-xs text-secondary text-center mt-2" aria-live="polite"></p>
+                </form>
+            </div>
+        </section>
+
+        <section id="panel-student" class="panel" hidden>
+            <div class="container">
+                <h2 id="student-day-title" class="text-2xl mb-1">Laporan Hari Ini</h2>
+                <p id="student-day-subtitle" class="text-sm text-secondary mb-4"></p>
+
+                <div class="flex gap-2 mb-4">
+                    <button id="btn-tab-anggota" class="btn btn-small btn-primary flex-1">
+                        1. Foto Anggota <img id="thumb-anggota" class="preview-thumb" alt="Pratinjau">
+                    </button>
+                    <button id="btn-tab-kondisi" class="btn btn-small btn-secondary flex-1">
+                        2. Foto Kelas <img id="thumb-kondisi" class="preview-thumb" alt="Pratinjau">
+                    </button>
+                </div>
+
+                <div id="camera-card" class="card p-3 mb-4">
+                    <p id="cam-info" class="text-xs text-center text-secondary font-bold mb-3">Mode: Potrait (9:16)</p>
+                    <div id="camera-container" class="camera-wrapper mb-4">
+                        <div id="cam-loading" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; z-index: 10; background: #000; display: none;">
+                            <i class="fa-solid fa-spinner fa-spin text-2xl text-blue mb-2" aria-hidden="true"></i>
+                            <p class="text-xs text-white">Menyalakan kamera...</p>
+                        </div>
+
+                        <video id="camera-stream" autoplay playsinline muted>Kamera tidak didukung.</video>
+                        <button id="btn-cam-switch" class="cam-switch" aria-label="Ganti Kamera">
+                            <i class="fa-solid fa-camera-rotate" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <button id="btn-snap" class="btn btn-primary">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ambil Foto
+                    </button>
+                </div>
+
+                <div id="camera-complete-box" class="card p-3 mb-4 text-center" style="display: none;">
+                    <i class="fa-solid fa-circle-check text-2xl text-blue mb-2" aria-hidden="true"></i>
+                    <p class="text-sm font-bold">Semua foto telah berhasil diambil!</p>
+                    <p class="text-xs text-secondary">Klik tombol tab di atas jika ingin mengambil ulang foto.</p>
+                </div>
+
+                <div id="ai-analysis-box" class="ai-card" style="display:none;">
+                    <div class="ai-card-title">
+                        <i class="fa-solid fa-microchip text-blue" aria-hidden="true"></i>
+                        Analisis AI
+                    </div>
+                    <div id="ai-analysis-status" class="text-xs text-secondary">Menunggu analisis...</div>
+                    <div class="ai-progress-track">
+                        <div id="ai-progress-bar" class="ai-progress-bar"></div>
+                    </div>
+                    <div id="ai-analysis-content"></div>
+                </div>
+
+                <fieldset class="card border-red">
+                    <legend class="text-sm font-bold text-red">
+                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> TANDAI YANG TIDAK HADIR / BOLOS:
+                    </legend>
+                    <div id="student-checkboxes" class="max-h-250 px-2"></div>
+                </fieldset>
+
+                <button id="btn-submit-report" class="btn btn-success shadow-success" disabled>
+                    <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Kirim Laporan Sekarang
+                </button>
+            </div>
+        </section>
+
+        <section id="panel-teacher" class="panel" hidden>
+            <div class="container">
+                <p class="text-xs text-secondary text-center mb-4">
+                    <i class="fa-solid fa-circle circle-indicator" aria-hidden="true"></i> Real-time Tersinkronisasi
+                </p>
+                <div id="reports-container"></div>
+                <div id="reports-empty" class="text-center py-10" hidden>
+                    <i class="fa-solid fa-box-open text-secondary icon-empty mb-4" aria-hidden="true"></i>
+                    <p class="text-secondary font-bold">Belum Ada Laporan</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <dialog id="pin-modal">
+        <div class="text-center">
+            <h2 class="text-xl mb-1">Keamanan Akses</h2>
+            <p class="text-xs text-secondary mb-6">Masukkan PIN Admin</p>
+            <form id="form-pin" method="dialog">
+                <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" class="input text-center font-bold input-pin mb-6" maxlength="6" placeholder="••••" required>
+                <div class="flex gap-2">
+                    <button type="button" id="btn-cancel-pin" class="btn btn-secondary btn-small flex-1">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-small flex-1">Masuk</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <dialog id="delete-modal">
+        <div class="text-center">
+            <h2 class="text-xl mb-1">Hapus Laporan</h2>
+            <p class="text-xs text-secondary mb-6">Yakin ingin menghapus laporan ini beserta fotonya secara permanen?</p>
+            <div class="flex gap-2">
+                <button type="button" id="btn-cancel-delete" class="btn btn-secondary btn-small flex-1">Batal</button>
+                <button type="button" id="btn-confirm-delete" class="btn btn-danger btn-small flex-1">Hapus</button>
+            </div>
+        </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="alert" popover="manual">Notifikasi</div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0';
+
+        const SUPABASE_URL = 'https://fpghyfikmzsztinzvktg.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_NthQDy_6_lGSKckmozI3xA_EO_WptoO';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const AI_TIMEOUT_MS = 120000; // batas waktu analisis AI agar tombol kirim tidak tertahan terlalu lama
+        const BUCKET = 'reports';
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function withTimeout(promise, ms, message) {
+            let timer;
+            const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms); });
+            return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+        }
+
+        /* =========================================================
+           WAKTU SERVER & ZONA WAKTU JAKARTA (WIB = UTC+7, tanpa DST)
+           - Semua hari/tanggal dihitung dari zona Asia/Jakarta, bukan zona perangkat.
+           - Offset dihitung dari header Date server (dikoreksi setengah RTT).
+           - Selisih jam perangkat vs server dipantau (drift) untuk mendeteksi manipulasi jam.
+           ========================================================= */
+        const Time = (() => {
+            const TZ = 'Asia/Jakarta';
+            const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const WEEKDAY_INDEX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+            const MAX_DRIFT_MS = 5 * 60 * 1000;     // toleransi selisih jam perangkat vs server
+            const SYNC_TIMEOUT_MS = 5000;
+            const RESYNC_AFTER_MS = 5 * 60 * 1000;
+
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: TZ, hourCycle: 'h23',
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+
+            let offsetMs = 0;       // waktu server - waktu perangkat
+            let synced = false;
+            let lastSyncAt = 0;
+            let inFlight = null;
+
+            const pad = (n) => String(n).padStart(2, '0');
+            const now = () => Date.now() + offsetMs;
+            const isSynced = () => synced;
+            const driftMs = () => -offsetMs;        // positif = jam perangkat lebih cepat dari server
+
+            function parts(ms = now()) {
+                const map = {};
+                for (const p of formatter.formatToParts(new Date(ms))) map[p.type] = p.value;
+                return {
+                    year: Number(map.year), month: Number(map.month), day: Number(map.day),
+                    hour: Number(map.hour) % 24, minute: Number(map.minute), second: Number(map.second),
+                    weekday: WEEKDAY_INDEX[map.weekday]
+                };
+            }
+
+            const dayName = (ms = now()) => DAY_NAMES[parts(ms).weekday];
+            const dateKey = (ms = now()) => { const p = parts(ms); return `${p.year}-${pad(p.month)}-${pad(p.day)}`; };
+            const formatClock = (ms = now()) => new Date(ms).toLocaleTimeString('id-ID', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+            const formatDate = (ms = now()) => new Date(ms).toLocaleDateString('id-ID', { timeZone: TZ, day: 'numeric', month: 'short', year: 'numeric' });
+
+            // Batas awal & akhir hari Jakarta dalam format ISO UTC (untuk query database)
+            function dayRangeISO(ms = now()) {
+                const startMs = Date.parse(`${dateKey(ms)}T00:00:00+07:00`);
+                return { start: new Date(startMs).toISOString(), end: new Date(startMs + 86400000).toISOString() };
+            }
+
+            async function sampleFrom(url, init = {}) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), SYNC_TIMEOUT_MS);
+                try {
+                    const t0 = performance.now();
+                    const res = await fetch(url, { ...init, method: 'HEAD', cache: 'no-store', signal: controller.signal });
+                    const rtt = performance.now() - t0;
+                    const deviceAtReceive = Date.now();
+
+                    const header = res.headers.get('Date');
+                    const serverMs = header ? Date.parse(header) : NaN;
+                    if (!Number.isFinite(serverMs)) return null;
+
+                    const age = Number(res.headers.get('Age'));
+                    const ageMs = Number.isFinite(age) && age > 0 ? age * 1000 : 0;
+
+                    // Header Date dibulatkan ke detik (rata-rata 500 ms hilang) + setengah RTT perjalanan balik
+                    const serverAtReceive = serverMs + ageMs + 500 + rtt / 2;
+                    return { offset: serverAtReceive - deviceAtReceive, rtt };
+                } catch (e) {
+                    return null;
+                } finally {
+                    clearTimeout(timer);
+                }
+            }
+
+            async function doSync() {
+                if (!navigator.onLine) return { ok: false, stale: synced, reason: 'offline' };
+
+                const sources = [];
+                if (/^https?:$/.test(location.protocol)) sources.push([location.origin + location.pathname, {}]);
+                sources.push([`${SUPABASE_URL}/rest/v1/`, { headers: { apikey: SUPABASE_KEY } }]);
+
+                let best = null;
+                for (const [url, init] of sources) {
+                    const sample = await sampleFrom(url, init);
+                    if (sample && (!best || sample.rtt < best.rtt)) best = sample;
+                    if (best && best.rtt < 1000) break;
+                }
+                if (!best) return { ok: false, stale: synced, reason: 'no-server-time' };
+
+                offsetMs = best.offset;
+                synced = true;
+                lastSyncAt = Date.now();
+                return { ok: true, driftMs: driftMs(), rtt: Math.round(best.rtt) };
+            }
+
+            function sync({ force = false } = {}) {
+                if (!force && synced && Date.now() - lastSyncAt < RESYNC_AFTER_MS) {
+                    return Promise.resolve({ ok: true, driftMs: driftMs(), cached: true });
+                }
+                if (!inFlight) inFlight = doSync().finally(() => { inFlight = null; });
+                return inFlight;
+            }
+
+            return { sync, now, isSynced, driftMs, dayName, dateKey, dayRangeISO, formatClock, formatDate, MAX_DRIFT_MS };
+        })();
+
+        /* =========================================================
+           LIMIT PENGIRIMAN HARIAN (localStorage, per perangkat)
+           Kunci 'last_submit_date' menyimpan tanggal Jakarta (YYYY-MM-DD) laporan terakhir.
+           ========================================================= */
+        const Limit = (() => {
+            const KEY = 'last_submit_date';
+            const read = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+
+            return {
+                KEY,
+                status() {
+                    const today = Time.dateKey();
+                    const saved = read();
+                    return { reached: saved === today, today, saved };
+                },
+                markSubmitted() {
+                    try { localStorage.setItem(KEY, Time.dateKey()); return true; }
+                    catch (e) { console.warn('Limit harian tidak dapat disimpan:', e); return false; }
+                },
+                reset() {
+                    try { localStorage.removeItem(KEY); return true; }
+                    catch (e) { console.warn('Limit harian tidak dapat direset:', e); return false; }
+                }
+            };
+        })();
+
+        /* =========================================================
+           VALIDASI FOTO, UPLOAD, & PESAN ERROR
+           ========================================================= */
+        const PHOTO_RULES = {
+            maxBytes: 5 * 1024 * 1024,
+            minBytes: 2 * 1024,
+            allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+            uploadTimeoutMs: 60000
+        };
+
+        const formatBytes = (n) => n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
+
+        const PhotoValidator = {
+            // Baca "magic bytes" supaya format ditentukan dari isi file, bukan dari label type saja
+            async detectType(blob) {
+                try {
+                    const b = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+                    if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return 'image/jpeg';
+                    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) return 'image/png';
+                    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+                        b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return 'image/webp';
+                } catch (e) { /* abaikan, dianggap format tidak dikenal */ }
+                return null;
+            },
+            async check(blob, label) {
+                if (!(blob instanceof Blob)) return { ok: false, message: `${label} belum diambil.` };
+                if (blob.size === 0) return { ok: false, message: `${label} kosong (0 KB). Silakan ambil ulang.` };
+                if (blob.size < PHOTO_RULES.minBytes) {
+                    return { ok: false, message: `${label} rusak atau terlalu kecil (${formatBytes(blob.size)}). Silakan ambil ulang.` };
+                }
+                if (blob.size > PHOTO_RULES.maxBytes) {
+                    return { ok: false, message: `${label} terlalu besar (${formatBytes(blob.size)}, maksimal ${formatBytes(PHOTO_RULES.maxBytes)}). Silakan ambil ulang.` };
+                }
+                const type = await PhotoValidator.detectType(blob);
+                if (!type || !PHOTO_RULES.allowedTypes.includes(type)) {
+                    return { ok: false, message: `Format ${label} tidak didukung. Gunakan JPEG, PNG, atau WebP.` };
+                }
+                return { ok: true, type };
+            }
+        };
+
+        function describeUploadError(err, label, blob) {
+            const raw = String(err?.message || err || '').toLowerCase();
+            const status = Number(err?.statusCode ?? err?.status ?? err?.originalError?.status);
+            const size = blob ? ` (${formatBytes(blob.size)})` : '';
+
+            if (status === 413 || raw.includes('exceeded') || raw.includes('too large') || raw.includes('payload')) {
+                return `${label} ditolak server karena ukurannya terlalu besar${size}. Silakan ambil ulang.`;
+            }
+            if (status === 415 || raw.includes('mime') || (raw.includes('invalid') && raw.includes('type'))) {
+                return `Format ${label} tidak diizinkan oleh server. Gunakan foto JPEG.`;
+            }
+            if (status === 401 || status === 403 || raw.includes('row-level security') || raw.includes('unauthorized') || raw.includes('policy')) {
+                return `Server menolak upload ${label} (izin penyimpanan). Hubungi admin.`;
+            }
+            if (status === 404 || raw.includes('bucket not found')) {
+                return `Tempat penyimpanan foto ("${BUCKET}") tidak ditemukan di server. Hubungi admin.`;
+            }
+            if (status === 409 || raw.includes('already exists') || raw.includes('duplicate')) {
+                return `Nama file ${label} bentrok di server. Silakan kirim ulang.`;
+            }
+            if (raw.includes('timeout') || raw.includes('aborted')) {
+                return `Upload ${label} terlalu lama (sinyal lemah?). Periksa koneksi lalu coba lagi.`;
+            }
+            if (raw.includes('failed to fetch') || raw.includes('network') || raw.includes('load failed')) {
+                return `Koneksi terputus saat mengunggah ${label}. Periksa internet lalu coba lagi.`;
+            }
+            return `Gagal mengunggah ${label}${err?.message ? ` (${err.message})` : ''}.`;
+        }
+
+        function describeDbError(err) {
+            const code = String(err?.code || '');
+            const msg = String(err?.message || '').toLowerCase();
+            if (code === '42501' || msg.includes('row-level security') || msg.includes('permission')) {
+                return 'Server menolak penyimpanan laporan (izin database). Hubungi admin.';
+            }
+            if (code === '23505' || msg.includes('duplicate')) return 'Laporan ini sudah tercatat di server.';
+            if (code === '23502' || code === '42703' || code === 'PGRST204') {
+                return 'Struktur tabel "reports" tidak cocok dengan data laporan. Hubungi admin.';
+            }
+            if (msg.includes('failed to fetch') || msg.includes('network')) {
+                return 'Koneksi terputus saat menyimpan laporan. Periksa internet lalu coba lagi.';
+            }
+            return `Gagal menyimpan laporan ke database${err?.message ? ` (${err.message})` : ''}.`;
+        }
+
+        const PhotoStore = {
+            async upload(path, blob, label) {
+                try {
+                    const { error } = await withTimeout(
+                        supabase.storage.from(BUCKET).upload(path, blob, {
+                            upsert: false,
+                            contentType: blob.type || 'image/jpeg',
+                            cacheControl: '3600'
+                        }),
+                        PHOTO_RULES.uploadTimeoutMs,
+                        'timeout'
+                    );
+                    if (error) throw error;
+                } catch (err) {
+                    throw new Error(describeUploadError(err, label, blob));
+                }
+            }
+        };
+
+        /* =========================================================
+           ROLLBACK UPLOAD
+           Bila penyimpanan ke database gagal, foto yang sudah terunggah dihapus.
+           Jika penghapusan gagal, path disimpan di localStorage dan dibersihkan nanti.
+           ========================================================= */
+        const Rollback = (() => {
+            const KEY = 'piket_orphan_uploads';
+            const readQueue = () => {
+                try { const v = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(v) ? v : []; }
+                catch (e) { return []; }
+            };
+            const writeQueue = (arr) => {
+                try { if (arr.length) localStorage.setItem(KEY, JSON.stringify(arr.slice(-100))); else localStorage.removeItem(KEY); }
+                catch (e) { /* abaikan */ }
+            };
+            async function removePaths(paths) {
+                const { error } = await supabase.storage.from(BUCKET).remove(paths);
+                if (error) throw error;
+            }
+
+            return {
+                async removeUploads(paths) {
+                    const unique = [...new Set(paths)].filter(Boolean);
+                    if (!unique.length) return true;
+                    for (let attempt = 1; attempt <= 2; attempt++) {
+                        try { await removePaths(unique); return true; }
+                        catch (e) { console.warn(`Rollback upload gagal (percobaan ${attempt}):`, e); await sleep(500 * attempt); }
+                    }
+                    writeQueue([...readQueue(), ...unique]);
+                    return false;
+                },
+                async flush() {
+                    const pending = readQueue();
+                    if (!pending.length || !navigator.onLine) return;
+                    try { await removePaths(pending); writeQueue([]); }
+                    catch (e) { console.warn('Pembersihan foto tertinggal ditunda:', e); }
+                }
+            };
+        })();
+
+        /* =========================================================
+           PENGECEKAN LAPORAN DUPLIKAT
+           ========================================================= */
+        const ReportCheck = {
+            // Mengembalikan baris laporan hari ini (zona Jakarta) atau null. Melempar Error bila pengecekan gagal.
+            async findToday(dayName) {
+                const { start, end } = Time.dayRangeISO();
+                const run = (column) => supabase
+                    .from('reports')
+                    .select('id')
+                    .eq('day', dayName)
+                    .gte(column, start)
+                    .lt(column, end)
+                    .limit(1);
+
+                let result;
+                try {
+                    result = await run('created_at');
+                    if (result.error && /created_at|column/i.test(result.error.message || '')) {
+                        result = await run('timestamp');   // skema lama yang memakai kolom "timestamp"
+                    }
+                } catch (e) {
+                    throw new Error('Gagal memeriksa laporan hari ini: koneksi ke server bermasalah. Coba lagi.');
+                }
+
+                if (result.error) {
+                    throw new Error(`Gagal memeriksa laporan hari ini (${result.error.message || result.error.code || 'kesalahan server'}). Laporan belum dikirim, coba lagi.`);
+                }
+                return Array.isArray(result.data) && result.data.length > 0 ? result.data[0] : null;
+            },
+            async existsById(id) {
+                try {
+                    const { data, error } = await supabase.from('reports').select('id').eq('id', id).limit(1);
+                    return !error && Array.isArray(data) && data.length > 0;
+                } catch (e) { return false; }
+            }
+        };
+
+        /* =========================================================
+           AI ENGINE - INLINE, JADI TIDAK PERLU ai-engine.js TERPISAH
+           ========================================================= */
+        const AIEngine = (() => {
+            /* ---- Pengaturan ringan untuk HP ----
+               - Gambar diperkecil sebelum masuk model (CLIP memakai 224 px, tidak butuh 1280 px).
+               - WebGPU dipakai hanya bila adapter nyata tersedia & mendukung fp16 (dtype fp16).
+               - Selain itu WASM dengan quantization 8-bit (q8): unduhan & RAM jauh lebih kecil.
+               - Di perangkat low-end, model dimuat satu per satu dan dilepas setelah dipakai. */
+            const MAX_HISTORY_COMPARE = 6;
+            const CLIP_LONG_SIDE = 400;                                   // ≈ 400×225 → sisi terpendek ≥ 224 px (input CLIP)
+            const DETECT_LONG_SIDE = 640;                                 // 640×360
+            const DETECT_SIZE = { shortest_edge: 360, longest_edge: 640 }; // bawaan model: 800 / 1333
+
+            const models = {
+                clean:  { task: "zero-shot-image-classification", id: "Xenova/clip-vit-base-patch32",          pipe: null, loading: null, cfg: null, restore: null, shrinkDisabled: false },
+                detect: { task: "zero-shot-object-detection",     id: "onnx-community/grounding-dino-tiny-ONNX", pipe: null, loading: null, cfg: null, restore: null, shrinkDisabled: false }
+            };
+            let progressHandler = null;
+            let profilePromise = null;
+            const lastPct = {};
+
+            const CLEAN_LABELS = [
+                "a very clean classroom",
+                "a moderately clean classroom",
+                "a dirty classroom"
+            ];
+
+            const EQUIPMENT_LABELS = [
+                "a broom",
+                "a mop",
+                "a dustpan",
+                "a trash bin",
+                "a chair",
+                "a classroom desk"
+            ];
+
+            function clamp(n, min, max) {
+                return Math.max(min, Math.min(max, n));
+            }
+
+            function cancelledError() {
+                const e = new Error("Analisis AI dibatalkan.");
+                e.cancelled = true;
+                return e;
+            }
+
+            const describeCfg = (cfg) => cfg ? `${cfg.device}${cfg.dtype ? '-' + cfg.dtype : ''}` : 'n/a';
+
+            // Perkecil gambar sebelum masuk model. Tidak pernah memperbesar.
+            function resizeBlob(blob, longSide, quality = 0.85) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const url = URL.createObjectURL(blob);
+                    img.onload = () => {
+                        URL.revokeObjectURL(url);
+                        try {
+                            const w = img.naturalWidth || img.width;
+                            const h = img.naturalHeight || img.height;
+                            const scale = Math.min(1, longSide / Math.max(w, h));
+                            if (!(scale < 1)) { resolve(blob); return; }
+
+                            const canvas = document.createElement("canvas");
+                            canvas.width = Math.max(1, Math.round(w * scale));
+                            canvas.height = Math.max(1, Math.round(h * scale));
+                            const ctx = canvas.getContext("2d");
+                            ctx.imageSmoothingQuality = "high";
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            canvas.toBlob((out) => {
+                                canvas.width = 0; canvas.height = 0;   // bebaskan memori canvas (penting di iOS/Android lama)
+                                resolve(out || blob);
+                            }, "image/jpeg", quality);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    img.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        reject(new Error("Gagal membaca foto untuk analisis AI."));
+                    };
+                    img.src = url;
+                });
+            }
+
+            function detectProfile() {
+                if (profilePromise) return profilePromise;
+                profilePromise = (async () => {
+                    const ua = navigator.userAgent || "";
+                    const isMobile = navigator.userAgentData?.mobile === true || /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+                    const memoryGB = Number(navigator.deviceMemory) || 0;
+                    const lowEnd = isMobile || (memoryGB > 0 && memoryGB <= 4);
+
+                    let webgpu = false;
+                    let fp16 = false;
+                    if (navigator.gpu) {
+                        try {
+                            const adapter = await navigator.gpu.requestAdapter();
+                            if (adapter) {
+                                webgpu = true;
+                                fp16 = adapter.features?.has?.("shader-f16") === true;
+                            }
+                        } catch (e) {
+                            console.warn("[AI] Adapter WebGPU tidak tersedia:", e);
+                        }
+                    }
+
+                    const cpuConfigs = [
+                        { device: "wasm", dtype: "q8" },
+                        { device: "wasm", dtype: "fp32" }
+                    ];
+                    const configs = (webgpu && fp16)
+                        ? [{ device: "webgpu", dtype: "fp16" }, ...cpuConfigs]
+                        : cpuConfigs;
+
+                    return { isMobile, lowEnd, memoryGB, webgpu, fp16, configs, cpuConfigs };
+                })();
+                return profilePromise;
+            }
+
+            function reportDownload(key, p) {
+                if (!progressHandler || !p || p.status !== "progress") return;
+                const pct = Math.round(Number(p.progress) || 0);
+                if (lastPct[key] === pct) return;
+                lastPct[key] = pct;
+                const base = key === "clean" ? 15 : 55;
+                const span = key === "clean" ? 35 : 30;
+                const label = key === "clean" ? "model kebersihan" : "model deteksi";
+                progressHandler(`Mengunduh ${label}... ${pct}%`, base + (span * pct) / 100);
+            }
+
+            // Perkecil resolusi internal detektor (bawaan 800/1333 px sangat berat di HP). Dapat dikembalikan bila error.
+            function shrinkDetectorInput(pipe) {
+                try {
+                    const proc = pipe?.processor?.image_processor || pipe?.processor;
+                    if (proc && proc.size && typeof proc.size === "object") {
+                        const original = proc.size;
+                        proc.size = { ...original, ...DETECT_SIZE };
+                        return () => { proc.size = original; };
+                    }
+                } catch (e) {
+                    console.warn("[AI] Tidak bisa mengecilkan input detektor:", e);
+                }
+                return null;
+            }
+
+            function getPipe(key, { cpuOnly = false } = {}) {
+                const m = models[key];
+                if (m.pipe) return Promise.resolve(m.pipe);
+                if (m.loading) return m.loading;
+
+                m.loading = (async () => {
+                    const profile = await detectProfile();
+                    const configs = cpuOnly ? profile.cpuConfigs : profile.configs;
+                    let lastErr = null;
+
+                    for (const cfg of configs) {
+                        try {
+                            const pipe = await pipeline(m.task, m.id, {
+                                ...cfg,
+                                progress_callback: (p) => reportDownload(key, p)
+                            });
+                            m.pipe = pipe;
+                            m.cfg = cfg;
+                            if (key === "detect" && !m.shrinkDisabled) m.restore = shrinkDetectorInput(pipe);
+                            return pipe;
+                        } catch (e) {
+                            lastErr = e;
+                            console.warn(`[AI] Model ${key} gagal dimuat (${describeCfg(cfg)}):`, e);
+                        }
+                    }
+                    throw lastErr || new Error("Model AI gagal dimuat.");
+                })().finally(() => { m.loading = null; });
+
+                return m.loading;
+            }
+
+            async function releasePipe(key) {
+                const m = models[key];
+                const pipe = m.pipe;
+                m.pipe = null;
+                m.restore = null;
+                try { await pipe?.dispose?.(); } catch (e) { console.warn("[AI] Gagal melepas model:", e); }
+            }
+
+            // Jalankan inferensi dengan pemulihan otomatis: (1) ukuran input bawaan, (2) fallback WASM bila WebGPU error.
+            async function runModel(key, fn) {
+                const profile = await detectProfile();
+                const m = models[key];
+                try {
+                    let pipe = await getPipe(key);
+                    try {
+                        return await fn(pipe);
+                    } catch (firstErr) {
+                        console.warn(`[AI] Inferensi ${key} gagal (${describeCfg(m.cfg)}):`, firstErr);
+                        let lastErr = firstErr;
+
+                        if (m.restore) {
+                            const restore = m.restore;
+                            m.restore = null;
+                            restore();
+                            try {
+                                const out = await fn(pipe);
+                                m.shrinkDisabled = true;   // terbukti ukuran kecil yang bermasalah
+                                return out;
+                            } catch (e) { lastErr = e; }   // penyebabnya bukan ukuran input
+                        }
+                        if (m.cfg?.device === "webgpu") {
+                            await releasePipe(key);
+                            pipe = await getPipe(key, { cpuOnly: true });
+                            return await fn(pipe);
+                        }
+                        throw lastErr;
+                    }
+                } finally {
+                    if (profile.lowEnd) await releasePipe(key);   // hemat RAM/GPU di HP
+                }
+            }
+
+            async function loadModels() {
+                await getPipe("clean");
+                await getPipe("detect");
+                return { ok: true };
+            }
+
+            async function classifyCleanliness(blob) {
+                const input = await resizeBlob(blob, CLIP_LONG_SIDE);
+                const result = await runModel("clean", (pipe) => pipe(input, CLEAN_LABELS, { top_k: 3 }));
+                const top = result?.[0];
+
+                const labelMap = {
+                    "a very clean classroom": "Bersih",
+                    "a moderately clean classroom": "Cukup Bersih",
+                    "a dirty classroom": "Kotor"
+                };
+
+                let score = 50;
+                if (top?.label === "a very clean classroom") score = 90;
+                if (top?.label === "a moderately clean classroom") score = 65;
+                if (top?.label === "a dirty classroom") score = 25;
+
+                const confidence = Math.round((Number(top?.score) || 0) * 100);
+
+                return {
+                    label: labelMap[top?.label] || "Tidak diketahui",
+                    score,
+                    confidence,
+                    all: result || []
+                };
+            }
+
+            async function detectEquipment(blob) {
+                const input = await resizeBlob(blob, DETECT_LONG_SIDE);
+                const result = await runModel("detect", (pipe) => pipe(input, EQUIPMENT_LABELS, {
+                    threshold: 0.12,
+                    top_k: 20
+                }));
+
+                const bestByLabel = new Map();
+
+                for (const item of (result || [])) {
+                    const label = String(item.label || "").toLowerCase();
+                    const score = Number(item.score) || 0;
+                    if (!bestByLabel.has(label) || score > bestByLabel.get(label).score) {
+                        bestByLabel.set(label, { label, score, box: item.box || null });
+                    }
+                }
+
+                const aliases = {
+                    "a broom": "Sapu",
+                    "a mop": "Pel",
+                    "a dustpan": "Pengki",
+                    "a trash bin": "Tempat Sampah",
+                    "a chair": "Kursi",
+                    "a classroom desk": "Meja"
+                };
+
+                const required = ["a broom", "a mop", "a trash bin", "a dustpan"];
+                const detected = [];
+                const missing = [];
+
+                for (const label of required) {
+                    const item = bestByLabel.get(label);
+                    if (item && item.score >= 0.12) {
+                        detected.push({
+                            name: aliases[label] || label,
+                            score: Math.round(item.score * 100),
+                            box: item.box
+                        });
+                    } else {
+                        missing.push(aliases[label] || label);
+                    }
+                }
+
+                const equipmentScore = Math.round((detected.length / required.length) * 100);
+
+                return {
+                    score: equipmentScore,
+                    detected,
+                    missing,
+                    all: result || []
+                };
+            }
+
+            function imageToCanvas(blob, width = 32, height = 32) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const url = URL.createObjectURL(blob);
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement("canvas");
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+                            const scale = Math.max(width / img.width, height / img.height);
+                            const sw = width / scale;
+                            const sh = height / scale;
+                            const sx = (img.width - sw) / 2;
+                            const sy = (img.height - sh) / 2;
+
+                            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
+                            resolve(ctx.getImageData(0, 0, width, height));
+                        } catch (err) {
+                            reject(err);
+                        } finally {
+                            URL.revokeObjectURL(url);
+                        }
+                    };
+                    img.onerror = reject;
+                    img.src = url;
+                });
+            }
+
+            async function dHash(blob) {
+                const imageData = await imageToCanvas(blob, 17, 16);
+                const bits = [];
+
+                for (let y = 0; y < 16; y++) {
+                    for (let x = 0; x < 16; x++) {
+                        const i1 = (y * 17 + x) * 4;
+                        const i2 = (y * 17 + x + 1) * 4;
+
+                        const g1 =
+                            0.299 * imageData.data[i1] +
+                            0.587 * imageData.data[i1 + 1] +
+                            0.114 * imageData.data[i1 + 2];
+
+                        const g2 =
+                            0.299 * imageData.data[i2] +
+                            0.587 * imageData.data[i2 + 1] +
+                            0.114 * imageData.data[i2 + 2];
+
+                        bits.push(g1 > g2 ? 1 : 0);
+                    }
+                }
+
+                return bits;
+            }
+
+            function hammingSimilarity(a, b) {
+                if (!a || !b || a.length !== b.length) return 0;
+                let same = 0;
+                for (let i = 0; i < a.length; i++) {
+                    if (a[i] === b[i]) same++;
+                }
+                return same / a.length;
+            }
+
+            const hashCache = new Map();
+
+            async function fetchHashFromUrl(url) {
+                if (!url) return null;
+                if (hashCache.has(url)) return hashCache.get(url);
+                try {
+                    const response = await fetch(url, { cache: "force-cache" });
+                    if (!response.ok) return null;
+                    const blob = await response.blob();
+                    const hash = await dHash(blob);
+                    hashCache.set(url, hash);
+                    return hash;
+                } catch (e) {
+                    console.warn("[AI] Tidak bisa membaca foto lama:", e);
+                    return null;
+                }
+            }
+
+            async function antiFraud({ blobKondisi, blobAnggota, recentReports = [], sessionSeconds = 0, serverNowMs = Date.now() }) {
+                const flags = [];
+                let suspicion = 0;
+
+                if (!blobKondisi || !blobAnggota) {
+                    return { score: 100, level: "tinggi", flags: ["Foto laporan tidak lengkap"] };
+                }
+
+                const [currentConditionHash, currentMemberHash] = await Promise.all([
+                    dHash(blobKondisi),
+                    dHash(blobAnggota)
+                ]);
+
+                const internalSimilarity = hammingSimilarity(currentConditionHash, currentMemberHash);
+                if (internalSimilarity >= 0.97) {
+                    suspicion += 45;
+                    flags.push("Foto anggota dan foto kelas sangat mirip");
+                }
+
+                const candidates = Array.isArray(recentReports) ? recentReports.slice(0, MAX_HISTORY_COMPARE) : [];
+                for (const report of candidates) {
+                    const oldCondition = await fetchHashFromUrl(report.photo_kondisi);
+                    if (!oldCondition) continue;
+
+                    const similarity = hammingSimilarity(currentConditionHash, oldCondition);
+
+                    if (similarity >= 0.985) {
+                        suspicion += 60;
+                        flags.push("Foto kelas hampir identik dengan laporan sebelumnya");
+                        break;
+                    }
+
+                    if (similarity >= 0.93) {
+                        suspicion += 35;
+                        flags.push("Foto kelas sangat mirip dengan laporan sebelumnya");
+                        break;
+                    }
+                }
+
+                if (sessionSeconds > 0 && sessionSeconds < 2.0) {
+                    suspicion += 10;
+                    flags.push("Dua foto diambil dalam waktu sangat singkat");
+                }
+
+                if (!Number.isFinite(serverNowMs)) {
+                    suspicion += 5;
+                    flags.push("Waktu server tidak tersedia");
+                }
+
+                suspicion = clamp(suspicion, 0, 100);
+
+                let level = "rendah";
+                if (suspicion >= 70) level = "tinggi";
+                else if (suspicion >= 35) level = "sedang";
+
+                return {
+                    score: suspicion,
+                    level,
+                    flags,
+                    internalSimilarity: Math.round(internalSimilarity * 100)
+                };
+            }
+
+            async function analyze({ blobKondisi, blobAnggota, recentReports, sessionSeconds, serverNowMs, onProgress, isCancelled }) {
+                const guard = () => { if (isCancelled?.()) throw cancelledError(); };
+                progressHandler = onProgress || null;
+                for (const k of Object.keys(lastPct)) delete lastPct[k];
+
+                try {
+                    onProgress?.("Menyiapkan analisis...", 8);
+                    const profile = await detectProfile();
+                    guard();
+
+                    onProgress?.("Memeriksa kebersihan kelas...", 15);
+                    const cleanliness = await classifyCleanliness(blobKondisi);
+                    guard();
+
+                    onProgress?.("Mendeteksi perlengkapan piket...", 55);
+                    const equipment = await detectEquipment(blobKondisi);
+                    guard();
+
+                    onProgress?.("Menganalisis anomali laporan...", 90);
+                    const fraud = await antiFraud({
+                        blobKondisi,
+                        blobAnggota,
+                        recentReports,
+                        sessionSeconds,
+                        serverNowMs
+                    });
+
+                    onProgress?.("Analisis selesai.", 100);
+
+                    return {
+                        version: "1.1",
+                        analyzedAt: new Date().toISOString(),
+                        cleanliness,
+                        equipment,
+                        fraud,
+                        runtime: {
+                            clean: describeCfg(models.clean.cfg),
+                            detect: describeCfg(models.detect.cfg),
+                            lowEnd: profile.lowEnd
+                        }
+                    };
+                } finally {
+                    progressHandler = null;
+                }
+            }
+
+            return { loadModels, analyze, classifyCleanliness, detectEquipment, antiFraud };
+        })();
+
+        const State = {
+            isAuthenticated: false,
+            isCameraStarting: false,
+            config: null,
+            currentPanel: 'loading',
+            targetAuthPanel: null,
+            reportsChannel: null, 
+            camStream: null,
+            camFacingMode: 'environment',
+            photoTarget: 'anggota',
+            blobAnggota: null,
+            blobKondisi: null,
+            urlAnggota: null,
+            urlKondisi: null,
+            absents: new Set(),
+            pendingDeleteId: null,
+            verifiedDayName: null,
+            sessionStartedAt: 0,
+            serverNowMs: Date.now(),
+            aiAnalysis: null,
+            aiRunId: 0,
+            isSubmitting: false
+        };
+
+        const UI = {
+            toastTimeout: null,
+            hideToastTimeout: null,
+            showToast: (msg, type = 'info') => {
+                const toast = document.getElementById('toast');
+
+                if (toast.showPopover && !toast.matches(':popover-open')) {
+                    try { toast.showPopover(); } catch(e){}
+                }
+
+                toast.textContent = msg;
+                toast.style.backgroundColor = type === 'error' ? 'var(--ios-red)' : 'rgba(0,0,0,0.85)';
+                toast.classList.add('show');
+
+                if (UI.toastTimeout) clearTimeout(UI.toastTimeout);
+                if (UI.hideToastTimeout) clearTimeout(UI.hideToastTimeout);
+
+                const duration = Math.min(9000, Math.max(3000, 2000 + String(msg).length * 45));
+                UI.toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                    UI.toastTimeout = null;
+
+                    UI.hideToastTimeout = setTimeout(() => {
+                        if(toast.hidePopover && toast.matches(':popover-open')) {
+                            try { toast.hidePopover(); } catch(e){}
+                        }
+                    }, 300);
+                }, duration);
+            },
+            escapeHTML: (str) => {
+                if (str == null) return '';
+                return String(str).replace(/[&<>'"]/g, tag => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                }[tag] || tag));
+            }
+        };
+
+        const AIUI = {
+            reset: () => {
+                const box = document.getElementById('ai-analysis-box');
+                const status = document.getElementById('ai-analysis-status');
+                const progress = document.getElementById('ai-progress-bar');
+                const content = document.getElementById('ai-analysis-content');
+                if (box) box.style.display = 'none';
+                if (status) status.textContent = 'Menunggu analisis...';
+                if (progress) progress.style.width = '0%';
+                if (content) content.innerHTML = '';
+            },
+            progress: (msg, pct) => {
+                const box = document.getElementById('ai-analysis-box');
+                const status = document.getElementById('ai-analysis-status');
+                const progress = document.getElementById('ai-progress-bar');
+                if (box) box.style.display = 'block';
+                if (status) status.textContent = msg;
+                if (progress) progress.style.width = `${Math.max(0, Math.min(100, pct || 0))}%`;
+            },
+            render: (analysis) => {
+                const box = document.getElementById('ai-analysis-box');
+                const status = document.getElementById('ai-analysis-status');
+                const progress = document.getElementById('ai-progress-bar');
+                const content = document.getElementById('ai-analysis-content');
+                if (!box || !content) return;
+
+                box.style.display = 'block';
+                progress.style.width = '100%';
+
+                if (!analysis) {
+                    status.textContent = 'Analisis belum tersedia.';
+                    content.innerHTML = '';
+                    return;
+                }
+
+                if (analysis.error) {
+                    status.textContent = 'AI tidak dapat menyelesaikan analisis.';
+                    content.innerHTML = `<div class="ai-error">${UI.escapeHTML(analysis.error)}</div>`;
+                    return;
+                }
+
+                status.textContent = 'Analisis selesai.';
+                const c = analysis.cleanliness || {};
+                const e = analysis.equipment || {};
+                const f = analysis.fraud || {};
+                const detected = (e.detected || []).map(x => `<span class="ai-pill"><i class="fa-solid fa-check"></i>${UI.escapeHTML(x.name)} ${Number(x.score) || 0}%</span>`).join('');
+                const missing = (e.missing || []).map(x => `<span class="ai-pill"><i class="fa-solid fa-xmark"></i>${UI.escapeHTML(x)}</span>`).join('');
+                const flags = (f.flags || []).map(x => `<li>${UI.escapeHTML(x)}</li>`).join('');
+
+                content.innerHTML = `
+                    <div class="ai-grid">
+                        <div class="ai-stat">
+                            <div class="ai-stat-label">Kebersihan (estimasi)</div>
+                            <div class="ai-stat-value">${UI.escapeHTML(c.label || 'Tidak diketahui')} · ${Number(c.confidence) || 0}%</div>
+                        </div>
+                        <div class="ai-stat">
+                            <div class="ai-stat-label">Perlengkapan</div>
+                            <div class="ai-stat-value">${Number(e.score) || 0}% terdeteksi</div>
+                        </div>
+                        <div class="ai-stat">
+                            <div class="ai-stat-label">Anomali / anti-fraud</div>
+                            <div class="ai-stat-value">${UI.escapeHTML(f.level || 'rendah')} · ${Number(f.score) || 0}/100</div>
+                        </div>
+                        <div class="ai-stat">
+                            <div class="ai-stat-label">Kemiripan foto internal</div>
+                            <div class="ai-stat-value">${Number(f.internalSimilarity) || 0}%</div>
+                        </div>
+                    </div>
+                    <div class="mt-2"><strong class="text-xs">Terdeteksi:</strong><div>${detected || '<span class="text-xs text-secondary">Belum ada perlengkapan wajib yang terdeteksi.</span>'}</div></div>
+                    <div class="mt-2"><strong class="text-xs">Tidak terdeteksi:</strong><div>${missing || '<span class="text-xs text-secondary">Semua item wajib terdeteksi.</span>'}</div></div>
+                    ${flags ? `<div class="mt-2"><strong class="text-xs">Sinyal anomali:</strong><ul class="ai-flags">${flags}</ul></div>` : ''}
+                    <div class="ai-note">Catatan: hasil AI adalah estimasi/sinyal audit, bukan bukti mutlak.</div>
+                `;
+            }
+        };
+
+        const CameraMod = {
+            start: async () => {
+                if (State.isCameraStarting) return;
+                State.isCameraStarting = true;
+
+                if (!State.sessionStartedAt) State.sessionStartedAt = performance.now();
+
+                const video = document.getElementById('camera-stream');
+                const container = document.getElementById('camera-container');
+                const loading = document.getElementById('cam-loading');
+
+                if(!video) {
+                    State.isCameraStarting = false;
+                    return;
+                }
+
+                if (!window.isSecureContext) {
+                    video.style.display = 'none';
+                    container.innerHTML = `
+                        <div class="cam-error-fallback flex flex-col items-center justify-center w-full p-3 h-full z-10 relative">
+                            <i class="fa-solid fa-lock text-2xl text-red mb-3"></i>
+                            <p class="text-xs text-center text-white mb-3">Akses kamera membutuhkan koneksi HTTPS yang aman.</p>
+                        </div>
+                    `;
+                    State.isCameraStarting = false;
+                    return UI.showToast("Koneksi tidak aman (HTTP).", "error");
+                }
+
+                if (loading) loading.style.display = 'flex';
+                if(State.camStream) CameraMod.stop();
+
+                try {
+                    let vidWidth = State.camFacingMode === 'user' ? 720 : 1280;
+                    let vidHeight = State.camFacingMode === 'user' ? 1280 : 720;
+
+                    State.camStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: State.camFacingMode, width: { ideal: vidWidth }, height: { ideal: vidHeight } } 
+                    });
+
+                    const existingFallback = container.querySelector('.cam-error-fallback');
+                    if (existingFallback) existingFallback.remove();
+
+                    video.style.display = 'block';
+                    video.srcObject = State.camStream;
+                    video.style.transform = State.camFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+
+                    video.onloadeddata = async () => { 
+                        if (loading) loading.style.display = 'none'; 
+
+                        try {
+                            const devices = await navigator.mediaDevices.enumerateDevices();
+                            const videoInputs = devices.filter(device => device.kind === 'videoinput');
+                            const btnSwitch = document.getElementById('btn-cam-switch');
+                            if (btnSwitch) {
+                                btnSwitch.style.display = videoInputs.length <= 1 ? 'none' : 'flex';
+                            }
+                        } catch(e) {}
+                    };
+
+                } catch (err) {
+                    video.style.display = 'none';
+                    if (loading) loading.style.display = 'none';
+
+                    if(!container.querySelector('.cam-error-fallback')) {
+                        const fallbackDiv = document.createElement('div');
+                        fallbackDiv.className = 'cam-error-fallback flex flex-col items-center justify-center w-full p-3';
+                        fallbackDiv.style.zIndex = '10';
+                        fallbackDiv.innerHTML = `
+                            <i class="fa-solid fa-camera text-2xl text-red mb-3" aria-hidden="true"></i>
+                            <p class="text-xs text-center text-white mb-3">Akses kamera ditolak / Eror perangkat.</p>
+                            <button id="btn-cam-retry" class="btn btn-small btn-primary w-auto">Coba Lagi</button>
+                        `;
+                        container.appendChild(fallbackDiv);
+                        document.getElementById('btn-cam-retry').addEventListener('click', CameraMod.start);
+                    }
+                    UI.showToast("Gagal mengaktifkan kamera.", "error");
+                } finally {
+                    State.isCameraStarting = false;
+                }
+            },
+            stop: () => {
+                if (State.camStream) {
+                    State.camStream.getTracks().forEach(track => { track.stop(); State.camStream.removeTrack(track); });
+                    State.camStream = null;
+                }
+                const video = document.getElementById('camera-stream');
+                if(video) { video.pause(); video.srcObject = null; video.removeAttribute('src'); video.load(); }
+            },
+            switchCamera: async () => {
+                const btn = document.getElementById('btn-cam-switch');
+                if (!btn || btn.disabled) return;
+                btn.disabled = true;
+                try {
+                    State.camFacingMode = State.camFacingMode === 'user' ? 'environment' : 'user';
+                    CameraMod.stop(); await CameraMod.start();
+                } finally { btn.disabled = false; }
+            },
+            setTarget: (target) => {
+                State.photoTarget = target;
+                const isAnggota = target === 'anggota';
+
+                State.camFacingMode = isAnggota ? 'user' : 'environment';
+
+                document.getElementById('btn-tab-anggota').className = isAnggota ? 'btn btn-small btn-primary flex-1' : 'btn btn-small btn-secondary flex-1';
+                document.getElementById('btn-tab-kondisi').className = !isAnggota ? 'btn btn-small btn-primary flex-1' : 'btn btn-small btn-secondary flex-1';
+
+                const camWrap = document.getElementById('camera-container');
+                if(isAnggota) camWrap.classList.remove('landscape'); else camWrap.classList.add('landscape');
+
+                document.getElementById('cam-info').innerText = isAnggota ? 'Mode: Potrait (9:16)' : 'Mode: Landscape (16:9)';
+
+                const cameraCard = document.getElementById('camera-card');
+                const completeBox = document.getElementById('camera-complete-box');
+
+                if (cameraCard.style.display !== 'none') {
+                    if (completeBox) completeBox.style.display = 'none';
+                    if (State.currentPanel === 'student') CameraMod.start(); 
+                }
+            },
+            takeSnapshot: () => {
+                const btnSnap = document.getElementById('btn-snap');
+                if (btnSnap.disabled) return;
+
+                const video = document.getElementById('camera-stream');
+                if (!video || !video.videoWidth || !video.videoHeight) return UI.showToast('Kamera belum siap!', 'error');
+
+                btnSnap.disabled = true;
+                btnSnap.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Memproses...';
+
+                const isAnggota = State.photoTarget === 'anggota';
+                const canvas = document.createElement('canvas');
+
+                const targetRatio = isAnggota ? 9 / 16 : 16 / 9;
+
+                const vWidth = video.videoWidth; 
+                const vHeight = video.videoHeight;
+                const vRatio = vWidth / vHeight;
+
+                let cropWidth = vWidth;
+                let cropHeight = vHeight;
+                let offsetX = 0;
+                let offsetY = 0;
+
+                if (vRatio > targetRatio) {
+                    cropWidth = vHeight * targetRatio;
+                    offsetX = (vWidth - cropWidth) / 2;
+                } else {
+                    cropHeight = vWidth / targetRatio;
+                    offsetY = (vHeight - cropHeight) / 2;
+                }
+
+                const MAX_WIDTH = isAnggota ? 720 : 1280;
+                const MAX_HEIGHT = isAnggota ? 1280 : 720;
+
+                let targetWidth = cropWidth;
+                let targetHeight = cropHeight;
+
+                if (targetWidth > MAX_WIDTH) { targetHeight = targetHeight * (MAX_WIDTH / targetWidth); targetWidth = MAX_WIDTH; }
+                if (targetHeight > MAX_HEIGHT) { targetWidth = targetWidth * (MAX_HEIGHT / targetHeight); targetHeight = MAX_HEIGHT; }
+
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, offsetX, offsetY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(async (blob) => {
+                    btnSnap.disabled = false;
+                    btnSnap.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ambil Foto';
+
+                    if (!blob) return UI.showToast("Gagal mengambil gambar. Coba ambil ulang.", "error");
+                    canvas.width = 0; canvas.height = 0;   // bebaskan memori canvas
+
+                    const photoLabel = isAnggota ? 'Foto Anggota' : 'Foto Kelas';
+                    const photoCheck = await PhotoValidator.check(blob, photoLabel);
+                    if (!photoCheck.ok) return UI.showToast(photoCheck.message, "error");
+                    const newImgUrl = URL.createObjectURL(blob);
+
+                    if (isAnggota) {
+                        if(State.urlAnggota) URL.revokeObjectURL(State.urlAnggota);
+                        State.blobAnggota = blob; State.urlAnggota = newImgUrl;
+                        const thumb = document.getElementById('thumb-anggota');
+                        thumb.src = newImgUrl; thumb.style.display = 'inline-block';
+                        CameraMod.setTarget('kondisi'); 
+                    } else {
+                        if(State.urlKondisi) URL.revokeObjectURL(State.urlKondisi);
+                        State.blobKondisi = blob; State.urlKondisi = newImgUrl;
+                        const thumb = document.getElementById('thumb-kondisi');
+                        thumb.src = newImgUrl; thumb.style.display = 'inline-block';
+                    }
+
+                    if (State.blobAnggota && State.blobKondisi) {
+                        CameraMod.stop();
+                        document.getElementById('camera-card').style.display = 'none';
+                        document.getElementById('camera-complete-box').style.display = 'block';
+                        const submitBtn = document.getElementById('btn-submit-report');
+                        submitBtn.disabled = true;
+
+                        State.aiAnalysis = null;
+                        AIUI.progress("Menyiapkan analisis AI...", 5);
+
+                        try {
+                            await App.runAIAnalysis();
+                            UI.showToast("Foto selesai dianalisis AI.");
+                        } catch (err) {
+                            if (err?.cancelled) return;
+                            console.warn("[AI] Analisis gagal:", err);
+                            State.aiAnalysis = { error: err?.message || "Analisis AI gagal." };
+                            AIUI.render(State.aiAnalysis);
+                            UI.showToast("Analisis AI gagal, tapi laporan tetap bisa dikirim.", "error");
+                        } finally {
+                            submitBtn.disabled = false;
+                        }
+                    } else {
+                        UI.showToast(`Foto ${isAnggota ? 'Anggota' : 'Kelas'} berhasil diambil!`);
+                    }
+                }, 'image/jpeg', 0.6);
+            }
+        };
+
+        const App = {
+            init: async () => {
+                const updateClock = () => { document.getElementById('realtime-clock').textContent = `${Time.formatClock()} WIB`; };
+                updateClock(); setInterval(updateClock, 1000);
+                Time.sync().then(updateClock);
+                Rollback.flush();
+                window.addEventListener('online', () => { Rollback.flush(); Time.sync({ force: true }).then(updateClock); });
+
+                const isDark = document.body.classList.contains('dark-mode');
+                const themeIcon = document.querySelector('#btn-theme i');
+                if (isDark && themeIcon) { themeIcon.classList.remove('fa-moon'); themeIcon.classList.add('fa-sun'); }
+
+                App.bindEvents();
+
+                try {
+                    const { data, error } = await supabase.from('settings').select('config').eq('id', 'global').single();
+                    if (data && data.config) {
+                        State.config = data.config;
+                        localStorage.setItem('piket_config', JSON.stringify(State.config));
+                        App.navigate('home');
+                    } else { App.navigate('setup'); }
+                } catch (err) {
+                    const cachedConfig = localStorage.getItem('piket_config');
+                    if (cachedConfig) { try { State.config = JSON.parse(cachedConfig); } catch(e){} }
+                    UI.showToast("Menggunakan konfigurasi lokal / offline.", "info");
+                    App.navigate('home');
+                }
+            },
+
+            bindEvents: () => {
+                document.getElementById('btn-back').addEventListener('click', () => {
+                    App.navigate('home', true);
+                });
+
+                document.getElementById('btn-theme').addEventListener('click', (e) => {
+                    document.body.classList.toggle('dark-mode');
+                    const isDark = document.body.classList.contains('dark-mode');
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+                    const metaTheme = document.querySelector('meta[name="theme-color"]');
+                    if (metaTheme) metaTheme.setAttribute('content', isDark ? '#000000' : '#F2F2F7');
+
+                    const icon = e.currentTarget.querySelector('i');
+                    if (isDark) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); } 
+                    else { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
+                });
+
+                document.getElementById('btn-nav-student').addEventListener('click', () => App.navigate('student'));
+                document.getElementById('btn-nav-teacher').addEventListener('click', () => App.requestAuth('teacher'));
+                document.getElementById('btn-nav-setup').addEventListener('click', () => App.requestAuth('setup'));
+                document.getElementById('form-setup').addEventListener('submit', App.saveSetup);
+                document.getElementById('form-pin').addEventListener('submit', (e) => { e.preventDefault(); App.verifyPin(); });
+
+                document.getElementById('btn-cancel-pin').addEventListener('click', () => document.getElementById('pin-modal').close());
+                document.getElementById('pin-modal').addEventListener('cancel', () => { State.targetAuthPanel = null; });
+
+                document.getElementById('btn-tab-anggota').addEventListener('click', () => CameraMod.setTarget('anggota'));
+                document.getElementById('btn-tab-kondisi').addEventListener('click', () => CameraMod.setTarget('kondisi'));
+                document.getElementById('btn-cam-switch').addEventListener('click', CameraMod.switchCamera);
+                document.getElementById('btn-snap').addEventListener('click', CameraMod.takeSnapshot);
+                document.getElementById('btn-submit-report').addEventListener('click', App.submitReport);
+
+                document.getElementById('btn-cancel-delete').addEventListener('click', () => { document.getElementById('delete-modal').close(); State.pendingDeleteId = null; });
+                document.getElementById('btn-confirm-delete').addEventListener('click', App.executeDeleteReport);
+
+                document.getElementById('btn-reset-spam').addEventListener('click', () => {
+                    const wasBlocked = Limit.status().reached;
+                    if (!Limit.reset()) {
+                        return UI.showToast("Gagal mereset limit: penyimpanan browser tidak bisa diakses.", "error");
+                    }
+                    App.updateLimitStatus();
+                    UI.showToast(
+                        wasBlocked ? "Limit harian perangkat ini berhasil direset!" : "Limit harian perangkat ini belum aktif, tidak ada yang direset.",
+                        "info"
+                    );
+                });
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') Time.sync({ force: true }).catch(() => {});
+                    if (document.visibilityState === 'hidden' && State.currentPanel === 'student') {
+                        CameraMod.stop();
+                    } else if (document.visibilityState === 'visible' && State.currentPanel === 'student') {
+                        const completeBox = document.getElementById('camera-complete-box');
+                        if (completeBox && completeBox.style.display !== 'block') {
+                            const list = (State.config?.students || {})[State.verifiedDayName] || [];
+                            if(list.length > 0) {
+                                CameraMod.start().then(() => {
+                                    const video = document.getElementById('camera-stream');
+                                    if (video && video.paused) video.play().catch(e => console.warn(e));
+                                });
+                            }
+                        }
+                    }
+                });
+
+                document.querySelectorAll('dialog').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.close();
+                            if (modal.id === 'delete-modal') State.pendingDeleteId = null;
+                        }
+                    });
+                });
+            },
+
+            navigate: (panelName, isPop = false) => {
+                if ((panelName === 'teacher' || panelName === 'setup') && !State.isAuthenticated) {
+                    App.requestAuth(panelName);
+                    history.replaceState({ panel: 'home' }, '', '#home');
+                    return;
+                }
+
+                if (State.currentPanel === 'student' && panelName !== 'student') { CameraMod.stop(); App.resetStudentForm(); }
+                if (State.reportsChannel && panelName !== 'teacher') { supabase.removeChannel(State.reportsChannel); State.reportsChannel = null; }
+
+                document.querySelectorAll('.panel').forEach(p => p.hidden = true);
+                const targetPanel = document.getElementById(`panel-${panelName}`);
+                if (targetPanel) targetPanel.hidden = false;
+                State.currentPanel = panelName;
+                if (!isPop && panelName !== 'loading') history.pushState({ panel: panelName }, '', `#${panelName}`);
+
+                const titleEl = document.getElementById('header-title');
+                const backBtn = document.getElementById('btn-back');
+
+                if(panelName === 'home') {
+                    titleEl.innerText = "Beranda";
+                    backBtn.hidden = true;
+                    document.getElementById('home-teacher-name').innerText = `Wali Kelas: ${State.config?.teacher ? UI.escapeHTML(State.config.teacher) : '-'}`;
+                } else {
+                    backBtn.hidden = false;
+                    if(panelName === 'setup') { titleEl.innerText = "Pengaturan"; App.renderSetup(); }
+                    else if(panelName === 'student') { titleEl.innerText = "Kirim Laporan"; App.renderStudentRoom(); }
+                    else if(panelName === 'teacher') { titleEl.innerText = "Ruang Guru (Live)"; App.renderTeacherRoom(); }
+                }
+            },
+
+            resetStudentForm: () => {
+                if (State.urlAnggota) URL.revokeObjectURL(State.urlAnggota);
+                if (State.urlKondisi) URL.revokeObjectURL(State.urlKondisi);
+                State.blobAnggota = null; State.blobKondisi = null; State.urlAnggota = null; State.urlKondisi = null; State.absents.clear();
+                State.sessionStartedAt = 0;
+                State.serverNowMs = Time.isSynced() ? Time.now() : NaN;
+                State.aiRunId++;   // batalkan analisis AI yang masih berjalan
+                State.aiAnalysis = null;
+                const thumbA = document.getElementById('thumb-anggota'); const thumbK = document.getElementById('thumb-kondisi');
+                if (thumbA) { thumbA.style.display = 'none'; thumbA.removeAttribute('src'); }
+                if (thumbK) { thumbK.style.display = 'none'; thumbK.removeAttribute('src'); }
+                document.getElementById('camera-card').style.display = 'block';
+                document.getElementById('camera-complete-box').style.display = 'none';
+                AIUI.reset();
+                CameraMod.setTarget('anggota');
+            },
+
+            requestAuth: (targetPanel) => {
+                State.targetAuthPanel = targetPanel;
+                document.getElementById('pin-input').value = '';
+                document.getElementById('pin-modal').showModal();
+            },
+
+            verifyPin: () => {
+                const pin = document.getElementById('pin-input').value;
+                if (pin === (State.config?.adminPin || '1234')) { 
+                    State.isAuthenticated = true;
+                    document.getElementById('pin-modal').close(); 
+                    App.navigate(State.targetAuthPanel);
+                } else { 
+                    document.getElementById('pin-modal').close(); 
+                    UI.showToast("PIN Salah!", "error"); 
+                }
+            },
+
+            renderSetup: () => {
+                document.getElementById('setup-teacher').value = State.config?.teacher || '';
+                App.updateLimitStatus();
+                document.getElementById('setup-pin').value = State.config?.adminPin || '1234';
+                const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const confStudents = State.config?.students || {};
+                document.getElementById('setup-days-container').innerHTML = days.map(day => `
+                    <div class="card p-3 mb-3">
+                        <label for="setup-${day}" class="text-sm font-bold text-blue mb-1">Hari ${day}</label>
+                        <textarea id="setup-${day}" class="input text-sm mt-2 mb-0" rows="2" placeholder="Contoh: Andi, Budi">${UI.escapeHTML((confStudents[day] || []).join(', '))}</textarea>
+                    </div>
+                `).join('');
+            },
+
+            updateLimitStatus: () => {
+                const el = document.getElementById('limit-status');
+                if (!el) return;
+                const { reached, today } = Limit.status();
+                el.textContent = reached
+                    ? `Status: perangkat ini sudah mengirim laporan hari ini (${today}). Tekan tombol di atas untuk membukanya.`
+                    : 'Status: perangkat ini belum mengirim laporan hari ini. Jika laporan hari ini sudah ada di server, hapus dulu lewat Ruang Guru.';
+            },
+
+            saveSetup: async (e) => {
+                e.preventDefault();
+                const teacher = document.getElementById('setup-teacher').value.trim();
+                const adminPin = document.getElementById('setup-pin').value.trim() || '1234';
+                if(!teacher) return UI.showToast("Nama guru wajib diisi!", "error");
+
+                const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const studentsData = {};
+                let total = 0;
+
+                days.forEach(d => {
+                    const raw = document.getElementById(`setup-${d}`).value;
+                    const arr = [...new Set(raw.split(/[\n,]+/).map(s => s.trim()).filter(s => s.length > 0))];
+                    studentsData[d] = arr;
+                    total += arr.length;
+                });
+                if(total === 0) return UI.showToast("Isi minimal jadwal 1 hari!", "error");
+
+                const newConfig = { teacher, adminPin, students: studentsData };
+                const btn = document.getElementById('btn-save-setup');
+
+                try {
+                    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> Menyimpan...';
+
+                    const { error: dbError } = await supabase.from('settings').upsert({ id: 'global', config: newConfig });
+                    if (dbError) throw new Error(dbError.message);
+
+                    State.config = newConfig; 
+                    localStorage.setItem('piket_config', JSON.stringify(newConfig));
+                    UI.showToast("Pengaturan tersimpan!");
+                    App.navigate('home');
+                } catch (err) { 
+                    UI.showToast("Gagal menyimpan ke server: " + err.message, "error"); 
+                } finally { 
+                    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Simpan Pengaturan'; 
+                }
+            },
+
+            showStudentBlocked: ({ icon = 'fa-circle-info', tone = 'text-secondary', message, retry = false }) => {
+                const container = document.getElementById('student-checkboxes');
+                const tabButtons = document.querySelector('.flex.gap-2.mb-4');
+
+                CameraMod.stop();
+                State.verifiedDayName = null;
+                document.getElementById('camera-card').style.display = 'none';
+                if (tabButtons) tabButtons.style.display = 'none';
+                document.getElementById('btn-submit-report').disabled = true;
+
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fa-solid ${icon} ${tone} text-2xl mb-2" aria-hidden="true"></i>
+                        <p class="${tone} text-sm">${UI.escapeHTML(message)}</p>
+                        ${retry ? '<button type="button" id="btn-student-retry" class="btn btn-small btn-secondary mt-4" style="width:auto;">Coba Lagi</button>' : ''}
+                    </div>`;
+                if (retry) document.getElementById('btn-student-retry').addEventListener('click', () => App.renderStudentRoom());
+            },
+
+            renderStudentRoom: async () => {
+                const container = document.getElementById('student-checkboxes');
+                const btnSubmit = document.getElementById('btn-submit-report');
+                const subtitle = document.getElementById('student-day-subtitle');
+
+                State.verifiedDayName = null;
+                subtitle.innerText = "Memeriksa waktu jaringan...";
+                container.innerHTML = `<div class="text-center py-4"><i class="fa-solid fa-spinner fa-spin text-blue text-2xl" aria-hidden="true"></i><p class="text-xs text-secondary mt-2">Sinkronisasi Server...</p></div>`;
+                btnSubmit.disabled = true;
+
+                // 1) Sinkronisasi waktu server & validasi jam perangkat (zona Jakarta)
+                const sync = await Time.sync({ force: true });
+                if (State.currentPanel !== 'student') return;   // pengguna sudah pindah halaman
+
+                if (sync.ok && Math.abs(sync.driftMs) > Time.MAX_DRIFT_MS) {
+                    const minutes = Math.max(1, Math.round(Math.abs(sync.driftMs) / 60000));
+                    subtitle.innerText = '';
+                    UI.showToast("Jam perangkat tidak sinkron dengan server.", "error");
+                    return App.showStudentBlocked({
+                        icon: 'fa-triangle-exclamation', tone: 'text-red', retry: true,
+                        message: `Jam perangkat berbeda sekitar ${minutes} menit dari waktu server. Aktifkan "Tanggal & waktu otomatis" di pengaturan perangkat, lalu coba lagi.`
+                    });
+                }
+                if (!sync.ok) {
+                    console.warn("Waktu server tidak dapat diverifikasi:", sync.reason);
+                    UI.showToast("Waktu server belum terverifikasi. Memakai jam perangkat (WIB).", "info");
+                }
+
+                const todayName = Time.dayName();
+                State.serverNowMs = Time.isSynced() ? Time.now() : NaN;
+                subtitle.innerText = `Jadwal: ${todayName}, ${Time.formatDate()}`;
+
+                // 2) Batas 1 laporan per hari per perangkat
+                if (Limit.status().reached) {
+                    return App.showStudentBlocked({
+                        icon: 'fa-circle-check', tone: 'text-blue',
+                        message: 'Perangkat ini sudah mengirim laporan hari ini. Laporan berikutnya bisa dikirim besok.'
+                    });
+                }
+
+                State.verifiedDayName = todayName;
+
+                const list = (State.config?.students || {})[todayName] || [];
+                const tabButtonsContainer = document.querySelector('.flex.gap-2.mb-4');
+
+                if(list.length === 0) {
+                    container.innerHTML = `<p class="text-secondary text-sm text-center py-4">Tidak ada jadwal hari ini.</p>`;
+                    btnSubmit.disabled = true;
+
+                    CameraMod.stop(); 
+                    document.getElementById('camera-card').style.display = 'none'; 
+                    if(tabButtonsContainer) tabButtonsContainer.style.display = 'none'; 
+                    return;
+                } else {
+                    document.getElementById('camera-card').style.display = 'block';
+                    if(tabButtonsContainer) tabButtonsContainer.style.display = 'flex';
+                    CameraMod.start();
+                }
+
+                btnSubmit.disabled = !(State.blobAnggota && State.blobKondisi);
+                container.innerHTML = list.map((name, i) => `
+                    <div class="checkbox-row">
+                        <label for="cb-${i}" class="text-sm font-bold flex-1">${UI.escapeHTML(name)}</label>
+                        <input type="checkbox" id="cb-${i}" value="${UI.escapeHTML(name)}" class="ios-checkbox cb-student" ${State.absents.has(name) ? 'checked' : ''}>
+                    </div>
+                `).join('');
+
+                document.querySelectorAll('.cb-student').forEach(cb => cb.addEventListener('change', (e) => {
+                    if(e.target.checked) State.absents.add(e.target.value); else State.absents.delete(e.target.value);
+                }));
+            },
+
+            runAIAnalysis: async () => {
+                if (!State.blobKondisi || !State.blobAnggota) throw new Error("Foto belum lengkap.");
+
+                const runId = ++State.aiRunId;
+                const startedAt = State.sessionStartedAt || performance.now();
+                const sessionSeconds = Math.max(0, (performance.now() - startedAt) / 1000);
+                const cancelled = () => { const e = new Error("Analisis AI dibatalkan."); e.cancelled = true; return e; };
+
+                AIUI.progress("Mengambil laporan sebelumnya...", 4);
+
+                let recentReports = [];
+                try {
+                    const { data, error } = await supabase
+                        .from('reports')
+                        .select('photo_kondisi, created_at')
+                        .not('photo_kondisi', 'is', null)
+                        .order('created_at', { ascending: false })
+                        .limit(6);
+
+                    if (!error && Array.isArray(data)) recentReports = data;
+                } catch (e) {
+                    console.warn("[AI] Gagal mengambil laporan sebelumnya:", e);
+                }
+                if (runId !== State.aiRunId) throw cancelled();
+
+                let analysis;
+                try {
+                    analysis = await withTimeout(
+                        AIEngine.analyze({
+                            blobKondisi: State.blobKondisi,
+                            blobAnggota: State.blobAnggota,
+                            recentReports,
+                            sessionSeconds,
+                            serverNowMs: Time.isSynced() ? Time.now() : NaN,
+                            onProgress: (msg, pct) => { if (runId === State.aiRunId) AIUI.progress(msg, pct); },
+                            isCancelled: () => runId !== State.aiRunId
+                        }),
+                        AI_TIMEOUT_MS,
+                        "Analisis AI terlalu lama (perangkat/jaringan lambat) sehingga dilewati."
+                    );
+                } catch (err) {
+                    if (runId === State.aiRunId) State.aiRunId++;   // hentikan sisa proses yang masih berjalan
+                    throw err;
+                }
+
+                if (runId !== State.aiRunId) throw cancelled();
+
+                State.aiAnalysis = analysis;
+                AIUI.render(State.aiAnalysis);
+                return State.aiAnalysis;
+            },
+
+            submitReport: async () => {
+                if (State.isSubmitting) return;
+                if (!State.blobAnggota || !State.blobKondisi) return UI.showToast("Harap ambil foto Anggota & Kelas!", "error");
+                if (!navigator.onLine) return UI.showToast("Tidak ada koneksi internet.", "error");
+
+                const btn = document.getElementById('btn-submit-report');
+                const setBtn = (text) => { btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> ${text}`; };
+
+                let keepDisabled = false;
+                let uploadStarted = false;
+                let dbSaved = false;
+                const attemptedPaths = [];
+
+                State.isSubmitting = true;
+                btn.disabled = true;
+                setBtn('Memeriksa waktu...');
+
+                try {
+                    // 1) Waktu server (zona Jakarta) & pergantian hari
+                    const sync = await Time.sync({ force: true });
+                    if (sync.ok && Math.abs(sync.driftMs) > Time.MAX_DRIFT_MS) {
+                        throw new Error("Jam perangkat tidak sinkron dengan server. Aktifkan tanggal & waktu otomatis, lalu coba lagi.");
+                    }
+
+                    const currentRealDay = Time.dayName();
+                    if (State.verifiedDayName && State.verifiedDayName !== currentRealDay) {
+                        keepDisabled = true;
+                        UI.showToast("Tanggal telah berganti. Memuat ulang jadwal...", "error");
+                        App.resetStudentForm();   // foto kemarin tidak boleh dipakai untuk laporan hari baru
+                        App.renderStudentRoom();
+                        return;
+                    }
+
+                    // 2) Limit harian perangkat (localStorage)
+                    if (Limit.status().reached) {
+                        keepDisabled = true;
+                        App.renderStudentRoom();
+                        throw new Error("Perangkat ini sudah mengirim laporan hari ini.");
+                    }
+
+                    // 3) Validasi ukuran & format foto
+                    setBtn('Memeriksa foto...');
+                    const checks = [
+                        [State.blobAnggota, 'Foto Anggota'],
+                        [State.blobKondisi, 'Foto Kelas']
+                    ];
+                    for (const [blob, label] of checks) {
+                        const check = await PhotoValidator.check(blob, label);
+                        if (!check.ok) throw new Error(check.message);
+                    }
+
+                    // 4) Cek laporan ganda di server (rentang hari Jakarta)
+                    setBtn('Memeriksa laporan hari ini...');
+                    const existingReport = await ReportCheck.findToday(currentRealDay);
+                    if (existingReport) throw new Error("Laporan untuk hari ini sudah ada di server!");
+
+                    // 5) Upload foto (jejak path dicatat agar bisa di-rollback)
+                    setBtn('Mengunggah foto...');
+                    const rId = 'rpt_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+                    const files = [
+                        { path: `${rId}_anggota.jpg`, blob: State.blobAnggota, label: 'Foto Anggota' },
+                        { path: `${rId}_kondisi.jpg`, blob: State.blobKondisi, label: 'Foto Kelas' }
+                    ];
+                    files.forEach(f => attemptedPaths.push(f.path));
+                    uploadStarted = true;
+
+                    const results = await Promise.allSettled(files.map(f => PhotoStore.upload(f.path, f.blob, f.label)));
+                    const failures = results.filter(r => r.status === 'rejected').map(r => r.reason?.message || 'Upload foto gagal.');
+                    if (failures.length) throw new Error([...new Set(failures)].join(' '));
+
+                    const urlA = supabase.storage.from(BUCKET).getPublicUrl(files[0].path).data.publicUrl;
+                    const urlK = supabase.storage.from(BUCKET).getPublicUrl(files[1].path).data.publicUrl;
+
+                    // 6) Simpan laporan ke database
+                    setBtn('Menyimpan laporan...');
+                    const absentArr = Array.from(State.absents);
+                    const payload = {
+                        id: rId,
+                        day: currentRealDay,
+                        absents: absentArr.length ? absentArr.join(', ') : 'Semua Hadir',
+                        photo_anggota: urlA,
+                        photo_kondisi: urlK,
+                        ai_analysis: State.aiAnalysis || { error: "Analisis AI tidak tersedia." }
+                    };
+
+                    const { error: dbErr } = await supabase.from('reports').insert([payload]);
+                    if (dbErr) {
+                        // Respons bisa hilang padahal data sudah masuk: jangan hapus foto bila barisnya ternyata ada.
+                        const actuallySaved = await ReportCheck.existsById(rId);
+                        if (!actuallySaved) throw new Error(describeDbError(dbErr));
+                        console.warn("Insert melaporkan error, tetapi laporan sudah tersimpan:", dbErr);
+                    }
+                    dbSaved = true;
+
+                    Limit.markSubmitted();
+                    UI.showToast("Laporan Berhasil Terkirim!");
+                    App.resetStudentForm();
+                    App.navigate('home');
+
+                } catch (err) {
+                    let message = err?.message || "Terjadi kesalahan saat mengirim laporan.";
+                    if (uploadStarted && !dbSaved) {
+                        // Rollback: hapus foto yang sudah terlanjur terunggah agar tidak menjadi sampah di storage
+                        setBtn('Membatalkan unggahan...');
+                        const cleaned = await Rollback.removeUploads(attemptedPaths);
+                        if (!cleaned) message += " Foto sementara akan dibersihkan otomatis nanti.";
+                    }
+                    UI.showToast(message, "error");
+                } finally {
+                    State.isSubmitting = false;
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Kirim Laporan Sekarang';
+                    btn.disabled = keepDisabled || !(State.blobAnggota && State.blobKondisi);
+                }
+            },
+
+            loadReportsData: async () => {
+                const container = document.getElementById('reports-container');
+                const emptyMsg = document.getElementById('reports-empty');
+
+                let reportsData = [];
+                const { data: reports, error } = await supabase.from('reports').select('*').order('created_at', { ascending: false, nullsFirst: false }).limit(20);
+
+                if (error) { 
+                    console.warn("Mencoba order via kolom cadangan...", error.message);
+                    const fallbackFetch = await supabase.from('reports').select('*').order('timestamp', { ascending: false }).limit(20);
+                    if(fallbackFetch.error) {
+                        container.innerHTML = '<p class="text-center text-secondary py-10">Gagal memuat data.</p>'; return;
+                    }
+                    reportsData = fallbackFetch.data;
+                } else {
+                    reportsData = reports;
+                }
+
+                container.innerHTML = '';
+                if(!reportsData || reportsData.length === 0) { emptyMsg.hidden = false; return; }
+                emptyMsg.hidden = true;
+
+                reportsData.forEach(d => {
+                    const timeVal = new Date(d.created_at || d.timestamp);
+                    const secureDateString = isNaN(timeVal) ? "Waktu tidak diketahui" : (timeVal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) + ' - ' + timeVal.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}));
+
+                    const isSemuaHadir = d.absents === 'Semua Hadir';
+                    const boxBg = isSemuaHadir ? 'var(--blue-bg-light)' : 'var(--danger-bg)';
+                    const textColor = isSemuaHadir ? 'var(--ios-blue)' : 'var(--ios-red)';
+                    const titleText = isSemuaHadir ? 'KETERANGAN KEHADIRAN:' : 'TIDAK HADIR / BOLOS:';
+
+                    const ai = d.ai_analysis || {};
+                    let aiHtml = '';
+                    if (ai?.error) {
+                        aiHtml = `<div class="ai-error mt-4"><strong>AI:</strong> ${UI.escapeHTML(ai.error)}</div>`;
+                    } else if (ai?.cleanliness || ai?.equipment || ai?.fraud) {
+                        const c = ai.cleanliness || {};
+                        const e = ai.equipment || {};
+                        const f = ai.fraud || {};
+                        const detected = (e.detected || []).map(x => `<span class="ai-pill"><i class="fa-solid fa-check"></i>${UI.escapeHTML(x.name)} ${Number(x.score)||0}%</span>`).join('');
+                        const missing = (e.missing || []).map(x => `<span class="ai-pill"><i class="fa-solid fa-xmark"></i>${UI.escapeHTML(x)}</span>`).join('');
+                        const flags = (f.flags || []).map(x => `<li>${UI.escapeHTML(x)}</li>`).join('');
+                        aiHtml = `
+                            <div class="ai-card mt-4">
+                                <div class="ai-card-title"><i class="fa-solid fa-microchip text-blue"></i> Analisis AI</div>
+                                <div class="ai-grid">
+                                    <div class="ai-stat"><div class="ai-stat-label">Kebersihan</div><div class="ai-stat-value">${UI.escapeHTML(c.label || 'Tidak diketahui')} · ${Number(c.confidence)||0}%</div></div>
+                                    <div class="ai-stat"><div class="ai-stat-label">Perlengkapan</div><div class="ai-stat-value">${Number(e.score)||0}%</div></div>
+                                    <div class="ai-stat"><div class="ai-stat-label">Anti-fraud</div><div class="ai-stat-value">${UI.escapeHTML(f.level || 'rendah')} · ${Number(f.score)||0}/100</div></div>
+                                    <div class="ai-stat"><div class="ai-stat-label">Kemiripan internal</div><div class="ai-stat-value">${Number(f.internalSimilarity)||0}%</div></div>
+                                </div>
+                                <div class="mt-2"><strong class="text-xs">Terdeteksi:</strong><div>${detected || '<span class="text-xs text-secondary">Tidak ada item wajib yang terdeteksi.</span>'}</div></div>
+                                <div class="mt-2"><strong class="text-xs">Tidak terdeteksi:</strong><div>${missing || '<span class="text-xs text-secondary">Semua item wajib terdeteksi.</span>'}</div></div>
+                                ${flags ? `<div class="mt-2"><strong class="text-xs">Sinyal anomali:</strong><ul class="ai-flags">${flags}</ul></div>` : ''}
+                                <div class="ai-note">Hasil AI adalah estimasi/sinyal audit.</div>
+                            </div>
+                        `;
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center" style="border-bottom: 1px solid var(--ios-border); padding-bottom:12px; margin-bottom:12px;">
+                            <div><h3 class="font-bold text-lg">Hari ${UI.escapeHTML(d.day)}</h3><span class="text-xs text-secondary">${UI.escapeHTML(secureDateString)}</span></div>
+                            <button class="btn-outline btn-small border-red text-red btn-delete" data-id="${d.id}" aria-label="Hapus Laporan">
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs font-bold text-secondary mb-2"><i class="fa-solid fa-users" aria-hidden="true"></i> FOTO ANGGOTA</p>
+                        <img src="${UI.escapeHTML(d.photo_anggota)}" 
+                             class="report-img-portrait mb-4" 
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%25%22 height=%22100%25%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23e0e0e0%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2214px%22 fill=%22%23757575%22%3EGambar Tidak Tersedia%3C/text%3E%3C/svg%3E';">
+                        <p class="text-xs font-bold text-secondary mb-2 mt-4"><i class="fa-solid fa-broom" aria-hidden="true"></i> FOTO KELAS</p>
+                        <img src="${UI.escapeHTML(d.photo_kondisi)}" 
+                             class="report-img-landscape" 
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%25%22 height=%22100%25%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23e0e0e0%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2214px%22 fill=%22%23757575%22%3EGambar Tidak Tersedia%3C/text%3E%3C/svg%3E';">
+                        <div style="background: ${boxBg}; padding: 12px 14px; border-radius: 12px;" class="mt-4">
+                            <p class="text-xs font-bold mb-1" style="color: ${textColor};">${titleText}</p>
+                            <p class="text-sm font-bold" style="color: ${textColor};">${UI.escapeHTML(d.absents)}</p>
+                        </div>
+                        ${aiHtml}
+                    `;
+                    container.appendChild(div);
+                });
+
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', (e) => App.deleteReport(e.currentTarget.getAttribute('data-id')));
+                });
+            },
+
+            renderTeacherRoom: () => {
+                document.getElementById('reports-container').innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-2xl text-blue" aria-hidden="true"></i></div>';
+                App.loadReportsData();
+
+                if (!State.reportsChannel) {
+                    State.reportsChannel = supabase.channel('public:reports')
+                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reports' }, payload => {
+                            UI.showToast("Laporan baru masuk!", "info");
+                            App.loadReportsData();
+                        })
+                        .subscribe();
+                }
+            },
+
+            deleteReport: (id) => {
+                State.pendingDeleteId = id;
+                document.getElementById('delete-modal').showModal();
+            },
+
+            executeDeleteReport: async () => {
+                const id = State.pendingDeleteId;
+                if (!id) return;
+
+                const btnConfirm = document.getElementById('btn-confirm-delete');
+                btnConfirm.disabled = true;
+                btnConfirm.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+                try {
+                    await supabase.storage.from('reports').remove([`${id}_anggota.jpg`, `${id}_kondisi.jpg`]).catch(() => {});
+
+                    const { error: errDb } = await supabase.from('reports').delete().eq('id', id);
+                    if (errDb) throw new Error("Gagal menghapus data laporan dari database.");
+
+                    document.getElementById('delete-modal').close();
+                    UI.showToast("Laporan Berhasil Dihapus!", "info");
+                    App.loadReportsData();
+                } catch(err) {
+                    UI.showToast("Gagal menghapus laporan: " + err.message, "error");
+                } finally {
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerText = 'Hapus';
+                    State.pendingDeleteId = null;
+                }
+            }
+        };
+
+        window.addEventListener('popstate', (e) => e.state && e.state.panel ? App.navigate(e.state.panel, true) : App.navigate('home', true));
+        window.addEventListener('DOMContentLoaded', App.init);
+    </script>
+</body>
+</html>
+ 
